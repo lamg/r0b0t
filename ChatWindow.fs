@@ -1,11 +1,8 @@
 module Chat
 
-open System
-open System.Threading
 open System.Threading.Channels
-open System.Threading.Tasks
-
 open Gtk
+open Types
 
 type ChatWindow(baseBuilder: nativeint) =
   inherit Window(baseBuilder)
@@ -17,26 +14,11 @@ type Components =
     send: Button
     llmProvider: ComboBoxText
     llm: ComboBoxText
-    preferences: MenuButton
     question: Channel<string>
+    fonts: FontButton
     answer: Channel<string option> }
 
-let provideLlmAnswer (question: string, answer: Channel<string option>) =
-
-  task {
-    let xs = [ "bli"; "blo"; "blu"; "coco"; "pepe"; "kiko" ]
-    let tks = new CancellationTokenSource(TimeSpan.FromSeconds 2)
-
-    for x in xs do
-      do! Task.Delay 100
-      do! answer.Writer.WriteAsync(Some $"{x} ", tks.Token).AsTask()
-
-    do! answer.Writer.WriteAsync None
-  }
-  |> Async.AwaitTask
-  |> Async.Start
-
-let requestLlmAnswer (c: Components) _ =
+let requestLlmAnswer (provider: string * Channel<string option> -> unit) (c: Components) =
   let addText w _ =
     c.chatDisplay.Buffer.PlaceCursor c.chatDisplay.Buffer.EndIter
     c.chatDisplay.Buffer.InsertAtCursor w
@@ -59,48 +41,56 @@ let requestLlmAnswer (c: Components) _ =
   let question = c.userMessage.Text
 
   c.chatDisplay.Buffer.PlaceCursor c.chatDisplay.Buffer.EndIter
-  c.chatDisplay.Buffer.InsertAtCursor $"🧑: {question}\n🤖:"
+  c.chatDisplay.Buffer.InsertAtCursor $"🧑: {question}\n🤖: "
 
-  provideLlmAnswer (question, c.answer)
+  provider (question, c.answer)
 
   loop () |> Async.AwaitTask |> Async.Start
 
 
 let confChatDisplay (c: Components) =
   let mutable provider = new CssProvider()
-  provider.LoadFromData("textview { font-size: 16pt; }") |> ignore
+  provider.LoadFromData("textview { font-size: 18pt;}") |> ignore
   c.chatDisplay.StyleContext.AddProvider(provider, 0u)
 
-let confUserMessage (c: Components) =
-  c.userMessage.Activated.Add(requestLlmAnswer c)
+let confUserMessage (cfg: Config) (c: Components) =
+  c.userMessage.Activated.Add(fun _ ->
+    let imp = cfg.implementation c.llmProvider.ActiveText c.llm.ActiveText
 
-let confSend (c: Components) = c.send.Clicked.Add(requestLlmAnswer c)
+    requestLlmAnswer imp c)
 
-let providerToModels =
-  [ "OpenAI", [ "gpt" ]; "GitHub", [ "copilot" ] ] |> Map.ofList
+let confSend (cfg: Config) (c: Components) =
+  c.send.Clicked.Add(fun _ ->
+    let imp = cfg.implementation c.llmProvider.ActiveText c.llm.ActiveText
 
-let confLlmProvider (c: Components) =
-  providerToModels.Keys |> Seq.iter (fun x -> c.llmProvider.AppendText x)
+    requestLlmAnswer imp c)
+
+let confLlmProvider (m: Map<string, Provider>) (c: Components) =
+  m.Keys |> Seq.iter (fun x -> c.llmProvider.AppendText x)
   c.llmProvider.Active <- 0
 
-let confLlm (c: Components) =
+let confLlm (m: Map<string, Provider>) (c: Components) =
   let updateModels _ =
     c.llm.RemoveAll()
 
-    providerToModels[c.llmProvider.ActiveText]
-    |> List.iter (fun x -> c.llm.AppendText x)
+    m[c.llmProvider.ActiveText].models |> List.iter (fun x -> c.llm.AppendText x)
 
     c.llm.Active <- 0
 
   c.llmProvider.Changed.Add updateModels
   updateModels ()
 
-let newChatWindow () =
+let newChatWindow (cfg: Config) =
   let builder = new Builder("ChatWindow.glade")
   let rawWindow = builder.GetRawOwnedObject "ChatWindow"
 
-
   let window = new ChatWindow(rawWindow)
+
+  let height = Gdk.Screen.Default.RootWindow.Height
+  let width = Gdk.Screen.Default.RootWindow.Width
+  window.HeightRequest <- height / 2
+  window.WidthRequest <- width / 4
+
   builder.Autoconnect window
   window.DeleteEvent.Add(fun _ -> Application.Quit())
 
@@ -111,14 +101,14 @@ let newChatWindow () =
       textAdjusment = builder.GetObject "text_adjustment" :?> Adjustment
       llmProvider = builder.GetObject "llm_provider" :?> ComboBoxText
       llm = builder.GetObject "llm" :?> ComboBoxText
-      preferences = builder.GetObject "preferences" :?> MenuButton
+      fonts = builder.GetObject "fonts" :?> FontButton
       question = Channel.CreateUnbounded<string>()
       answer = Channel.CreateUnbounded<string option>() }
 
   confChatDisplay c
-  confUserMessage c
-  confSend c
-  confLlmProvider c
-  confLlm c
+  confUserMessage cfg c
+  confSend cfg c
+  confLlmProvider cfg.provider c
+  confLlm cfg.provider c
 
   window

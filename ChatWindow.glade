@@ -73,14 +73,13 @@ Author: Luis Ángel Méndez Gort
               </packing>
             </child>
             <child>
-              <object class="GtkMenuButton" id="preferencesq">
+              <object class="GtkFontButton" id="fonts">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
-                <property name="focus-on-click">False</property>
                 <property name="receives-default">True</property>
-                <child>
-                  <placeholder/>
-                </child>
+                <property name="font">Sans 18</property>
+                <property name="language">en-us</property>
+                <property name="preview-text"/>
               </object>
               <packing>
                 <property name="expand">False</property>
