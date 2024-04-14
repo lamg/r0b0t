@@ -1,6 +1,7 @@
 open System
 open Gtk
 open Types
+open OpenAI.ObjectModels
 
 let getenv s =
   Environment.GetEnvironmentVariable s |> Option.ofObj
@@ -23,7 +24,7 @@ let githubKey = "github_key"
 let providerToModels =
   dotenv.net.DotEnv.Load()
 
-  [ openai, openaiKey, [ "gpt" ]
+  [ openai, openaiKey, [ Models.Gpt_3_5_Turbo ]
     github, githubKey, [ "copilot" ]
     dummy, "dummy_key", [ "dummy" ] ]
   |> List.map (fun (provider, envVar, models) ->
