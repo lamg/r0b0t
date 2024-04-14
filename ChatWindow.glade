@@ -1,7 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.40.0 -->
+<!-- Generated with glade 3.40.0 
+
+Copyright (C) (c) 2024 Luis Ángel Méndez Gort
+
+This file is part of r0b0t.
+
+r0b0t is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+r0b0t is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with r0b0t.  If not, see <http://www.gnu.org/licenses/>.
+
+Author: Luis Ángel Méndez Gort
+
+-->
 <interface>
   <requires lib="gtk+" version="3.24"/>
+  <!-- interface-license-type gplv3 -->
+  <!-- interface-name r0b0t -->
+  <!-- interface-description GTK application for interacting with Large Language Models -->
+  <!-- interface-copyright (c) 2024 Luis \303\201ngel M\303\251ndez Gort -->
+  <!-- interface-authors Luis \303\201ngel M\303\251ndez Gort -->
   <object class="GtkEntryBuffer" id="chat_buffer"/>
   <object class="GtkAdjustment" id="text_adjustment">
     <property name="upper">100</property>
@@ -103,6 +129,7 @@
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="has-focus">True</property>
+                <property name="can-default">True</property>
                 <property name="has-default">True</property>
                 <property name="buffer">chat_buffer</property>
               </object>

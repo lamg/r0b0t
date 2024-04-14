@@ -21,50 +21,50 @@ type Components =
     question: Channel<string>
     answer: Channel<string option> }
 
-let provideLlmAnswer (question: string, tks: CancellationToken, answer: Channel<string option>) =
+let provideLlmAnswer (question: string, answer: Channel<string option>) =
 
   task {
     let xs = [ "bli"; "blo"; "blu"; "coco"; "pepe"; "kiko" ]
+    let tks = new CancellationTokenSource(TimeSpan.FromSeconds 2)
 
     for x in xs do
-      do! Task.Delay 1000
-      do! answer.Writer.WriteAsync(Some $"{x} ", tks).AsTask()
+      do! Task.Delay 100
+      do! answer.Writer.WriteAsync(Some $"{x} ", tks.Token).AsTask()
 
     do! answer.Writer.WriteAsync None
   }
+  |> Async.AwaitTask
+  |> Async.Start
 
 let requestLlmAnswer (c: Components) _ =
-  let tks = new CancellationTokenSource(TimeSpan.FromSeconds 2)
-
-  let addText w =
+  let addText w _ =
     c.chatDisplay.Buffer.PlaceCursor c.chatDisplay.Buffer.EndIter
     c.chatDisplay.Buffer.InsertAtCursor w
     c.textAdjusment.Value <- c.textAdjusment.Upper
+    false
 
   let rec loop () =
     task {
-      let! r = c.answer.Reader.ReadAsync tks.Token
+      let! r = c.answer.Reader.ReadAsync()
 
       match r with
       | Some w ->
-        addText w
+        addText w |> GLib.Idle.Add |> ignore
         return! loop ()
       | None ->
-        addText "\n"
+        addText "\n\n" |> GLib.Idle.Add |> ignore
         return ()
     }
 
-  task {
-    let question = c.userMessage.Text
+  let question = c.userMessage.Text
 
-    c.chatDisplay.Buffer.PlaceCursor c.chatDisplay.Buffer.EndIter
-    c.chatDisplay.Buffer.InsertAtCursor $"user: {question}\n🤖:"
+  c.chatDisplay.Buffer.PlaceCursor c.chatDisplay.Buffer.EndIter
+  c.chatDisplay.Buffer.InsertAtCursor $"🧑: {question}\n🤖:"
 
-    do! provideLlmAnswer (question, tks.Token, c.answer)
-    do! loop ()
-  }
-  |> Async.AwaitTask
-  |> Async.Start
+  provideLlmAnswer (question, c.answer)
+
+  loop () |> Async.AwaitTask |> Async.Start
+
 
 let confChatDisplay (c: Components) =
   let mutable provider = new CssProvider()
