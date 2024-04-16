@@ -24,8 +24,8 @@ let githubKey = "github_key"
 let providerToModels =
   dotenv.net.DotEnv.Load()
 
-  [ openai, openaiKey, [ Models.Gpt_3_5_Turbo ]
-    github, githubKey, [ "copilot" ]
+  [ openai, openaiKey, [ Models.Gpt_3_5_Turbo; Models.Gpt_4; Models.Gpt_3_5_Turbo_16k; Models.Gpt_4_turbo ]
+    github, githubKey, [ "Copilot" ]
     dummy, "dummy_key", [ "dummy" ] ]
   |> List.map (fun (provider, envVar, models) ->
     provider,
