@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd Gui
 dotnet publish -c Release
 dotnet pack
 dotnet tool uninstall -g r0b0t
