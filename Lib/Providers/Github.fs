@@ -1,4 +1,4 @@
-module Provider.Github
+module R0b0t.Provider.Github
 
 open System
 open System.IO
@@ -186,11 +186,8 @@ let answer (auth: GithubAuth) (question: string, consumer: Channel<string option
 // ouath token looks like "ghu_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" and has length 40
 let mutable auth = { oauthToken = ""; token = "bla" }
 
-let provider (key: string option) (model: string) (question: string, c: Channel<string option>) =
-  match key with
-  | Some k ->
-    let nauth, s = answer { oauthToken = k; token = "" } (question, c)
-
+let ask (key: string) (_: string) (question: string, c: Channel<string option>) =
+    let nauth, s = answer { oauthToken = key; token = "" } (question, c)
     async {
       let! _ = s
       return ()
@@ -199,6 +196,3 @@ let provider (key: string option) (model: string) (question: string, c: Channel<
     //printfn $"s = {s |> Async.RunSynchronously}"
     //printfn $"nauth = {nauth}"
     auth <- nauth
-  | None ->
-    let xs = [ "no"; "valid"; "API"; "key"; "for"; "openai" ]
-    Util.provideLlmAnswer xs "" model (question, c)
