@@ -93,7 +93,7 @@ let newChatWindow (cfg: Config) =
 
   builder.Autoconnect window
   window.DeleteEvent.Add(fun _ -> Application.Quit())
-
+  
   let c =
     { chatDisplay = builder.GetObject "chat_display" :?> TextView
       userMessage = builder.GetObject "user_message" :?> Entry

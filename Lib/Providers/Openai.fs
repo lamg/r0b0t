@@ -1,4 +1,4 @@
-module Provider.Openai
+module R0b0t.Provider.Openai
 
 open System
 open System.Threading
@@ -51,8 +51,7 @@ let answerWithData (key: string) (model: string) (context: string) (question: st
   let messages = messages @ [ ChatMessage.FromUser question ]
   streamAnswer client model chan messages
 
-
-let answer (key: string) (model: string) (question: string, chan: Channel<string option>) =
+let ask (key: string) (model: string) (question: string, chan: Channel<string option>) =
   match question with
   | "" -> chan.Writer.WriteAsync None |> _.AsTask() |> Async.AwaitTask |> Async.Start
   | _ ->
@@ -62,10 +61,3 @@ let answer (key: string) (model: string) (question: string, chan: Channel<string
       return ()
     }
     |> Async.Start
-
-let provider (key: string option) (model: string) (question: string, c: Channel<string option>) =
-  match key with
-  | Some k -> answer k model (question, c)
-  | None ->
-    let xs = [ "no"; "valid"; "API"; "key"; "for"; "openai" ]
-    Util.provideLlmAnswer xs "" model (question, c)

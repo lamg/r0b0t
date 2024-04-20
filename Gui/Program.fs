@@ -3,6 +3,8 @@ open Gtk
 open Types
 open OpenAI.ObjectModels
 
+open R0b0t
+
 let getenv s =
   Environment.GetEnvironmentVariable s |> Option.ofObj
 
@@ -36,18 +38,19 @@ let providerToModels =
   |> Map.ofList
 
 let providerImplementations =
-  [ openai, Provider.Openai.provider
-    github, Provider.Github.provider
+  [ openai, Provider.Openai.ask
+    github, Provider.Github.ask
     dummy, Provider.Dummy.provider ]
   |> Map.ofList
 
 let getImplementation (provider: string) (model: string) =
   match providerImplementations.TryFind provider, providerToModels.TryFind provider with
-  | Some f, Some p -> f p.key model
-  | _ -> Provider.Dummy.provider None dummy
+  | Some f, Some { key = Some k } -> f k model
+  | Some _, Some { key = None } -> (fun (_, answer) -> Provider.Util.sendAnswer ["not"; "found"; "key"; "for"; provider] answer)
+  | _ -> Provider.Dummy.provider "" ""
 
 [<EntryPoint>]
-let main args =
+let main _ =
   Application.Init()
   let app = new Application("r0b0t.lamg.github.com", GLib.ApplicationFlags.None)
   app.Register(GLib.Cancellable.Current) |> ignore

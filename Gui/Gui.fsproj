@@ -6,11 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Types.fs" />
-    <Compile Include="Providers\Util.fs" />
-    <Compile Include="Providers\Dummy.fs" />
-    <Compile Include="Providers\Openai.fs" />
-    <Compile Include="Providers\Github.fs" />
     <Compile Include="ChatWindow.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
@@ -27,6 +22,10 @@
     <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
     <PackageReference Include="FsHttp" Version="14.5.0" />
     <PackageReference Include="GtkSharp" Version="3.24.24.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lib\Lib.fsproj" />
   </ItemGroup>
 
 </Project>
