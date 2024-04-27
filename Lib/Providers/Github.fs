@@ -9,6 +9,8 @@ open System.Threading.Channels
 open FsHttp
 open FSharp.Control
 
+open Types
+
 type GithubAuth = { oauthToken: string; token: string }
 
 type FilterOffsets =
@@ -187,12 +189,21 @@ let answer (auth: GithubAuth) (question: string, consumer: Channel<string option
 let mutable auth = { oauthToken = ""; token = "bla" }
 
 let ask (key: string) (_: string) (question: string, c: Channel<string option>) =
-    let nauth, s = answer { oauthToken = key; token = "" } (question, c)
-    async {
-      let! _ = s
-      return ()
-    }
-    |> Async.Start
-    //printfn $"s = {s |> Async.RunSynchronously}"
-    //printfn $"nauth = {nauth}"
-    auth <- nauth
+  let nauth, s = answer { oauthToken = key; token = "" } (question, c)
+
+  async {
+    let! _ = s
+    return ()
+  }
+  |> Async.Start
+  //printfn $"s = {s |> Async.RunSynchronously}"
+  //printfn $"nauth = {nauth}"
+  auth <- nauth
+
+[<Literal>]
+let environmentVar = "github_key"
+
+let getProvider (key: string) =
+  { name = "GitHub"
+    models = [ "Copilot" ]
+    implementation = ask key }

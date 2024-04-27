@@ -7,27 +7,29 @@ open Types
 type ChatWindow(baseBuilder: nativeint) =
   inherit Window(baseBuilder)
 
-type Components =
-  { chatDisplay: TextView
-    textAdjusment: Adjustment
-    userMessage: Entry
-    send: Button
-    llmProvider: ComboBoxText
-    llm: ComboBoxText
-    question: Channel<string>
-    fonts: FontButton
-    answer: Channel<string option> }
+type ProviderLlm = { provider: string; llm: string }
+type GetProviderLlm = unit -> ProviderLlm
 
-let requestLlmAnswer (provider: string * Channel<string option> -> unit) (c: Components) =
-  let addText w _ =
-    c.chatDisplay.Buffer.PlaceCursor c.chatDisplay.Buffer.EndIter
-    c.chatDisplay.Buffer.InsertAtCursor w
-    c.textAdjusment.Value <- c.textAdjusment.Upper
+let addText (chatDisplay: TextView) (textAdjustment: Adjustment) (word: string) : GLib.IdleHandler =
+  let f () =
+    chatDisplay.Buffer.PlaceCursor chatDisplay.Buffer.EndIter
+    chatDisplay.Buffer.InsertAtCursor word
+    textAdjustment.Value <- textAdjustment.Upper
     false
 
+  f
+
+let printQuestion (chatDisplay: TextView) (chatInput: TextView) =
+  let question = chatInput.Buffer.Text
+
+  chatDisplay.Buffer.PlaceCursor chatDisplay.Buffer.EndIter
+  chatDisplay.Buffer.InsertAtCursor $"🧑: {question}\n🤖: "
+  question
+
+let readAnswer (answer: Channel<string option>, addText: string -> GLib.IdleHandler) =
   let rec loop () =
     task {
-      let! r = c.answer.Reader.ReadAsync()
+      let! r = answer.Reader.ReadAsync()
 
       match r with
       | Some w ->
@@ -38,49 +40,62 @@ let requestLlmAnswer (provider: string * Channel<string option> -> unit) (c: Com
         return ()
     }
 
-  let question = c.userMessage.Text
-
-  c.chatDisplay.Buffer.PlaceCursor c.chatDisplay.Buffer.EndIter
-  c.chatDisplay.Buffer.InsertAtCursor $"🧑: {question}\n🤖: "
-
-  provider (question, c.answer)
-
   loop () |> Async.AwaitTask |> Async.Start
 
-
-let confChatDisplay (c: Components) =
+let confChatDisplay (b: Builder) =
+  let chatDisplay = b.GetObject "chat_display" :?> TextView
   let mutable provider = new CssProvider()
   provider.LoadFromData("textview { font-size: 18pt;}") |> ignore
-  c.chatDisplay.StyleContext.AddProvider(provider, 0u)
+  chatDisplay.StyleContext.AddProvider(provider, 0u)
+  chatDisplay
 
-let confUserMessage (cfg: Config) (c: Components) =
-  c.userMessage.Activated.Add(fun _ ->
-    let imp = cfg.implementation c.llmProvider.ActiveText c.llm.ActiveText
+let confSelector (providers: Map<string, Provider>) (b: Builder) =
+  let llmProvider = b.GetObject "llm_provider" :?> ComboBoxText
+  let llm = b.GetObject "llm" :?> ComboBoxText
 
-    requestLlmAnswer imp c)
+  fun () ->
+    let provider = llmProvider.ActiveText
+    let llm = llm.ActiveText
+    providers[provider].implementation llm
 
-let confSend (cfg: Config) (c: Components) =
-  c.send.Clicked.Add(fun _ ->
-    let imp = cfg.implementation c.llmProvider.ActiveText c.llm.ActiveText
+let confChatInput (b: Builder) =
+  let chatInput = b.GetObject "chat_input" :?> TextView
+  let mutable provider = new CssProvider()
+  provider.LoadFromData("textview { font-size: 18pt;}") |> ignore
+  chatInput.StyleContext.AddProvider(provider, 0u)
 
-    requestLlmAnswer imp c)
+  chatInput
 
-let confLlmProvider (m: Map<string, Provider>) (c: Components) =
-  m.Keys |> Seq.iter (fun x -> c.llmProvider.AppendText x)
-  c.llmProvider.Active <- 0
 
-let confLlm (m: Map<string, Provider>) (c: Components) =
+let confSend (b: Builder) (makeQuestion: unit -> unit) =
+  let send = b.GetObject "send" :?> Button
+
+  send.Clicked.Add(fun _ -> makeQuestion ())
+
+let confLlm (m: Map<string, Provider>) (b: Builder) =
+  let llmProvider = b.GetObject "llm_provider" :?> ComboBoxText
+  m.Keys |> Seq.iter (fun x -> llmProvider.AppendText x)
+  llmProvider.Active <- 0
+
+
+  let llm = b.GetObject "llm" :?> ComboBoxText
+
   let updateModels _ =
-    c.llm.RemoveAll()
+    llm.RemoveAll()
 
-    m[c.llmProvider.ActiveText].models |> List.iter (fun x -> c.llm.AppendText x)
+    m[llmProvider.ActiveText].models |> List.iter (fun x -> llm.AppendText x)
 
-    c.llm.Active <- 0
+    llm.Active <- 0
 
-  c.llmProvider.Changed.Add updateModels
+  llmProvider.Changed.Add updateModels
   updateModels ()
 
-let newChatWindow (cfg: Config) =
+let confChatInputEvent (chatInput: TextView) (makeQuestion: unit -> unit) =
+  chatInput.KeyReleaseEvent.Add(fun k ->
+    if k.Event.Key = Gdk.Key.Return && k.Event.State = Gdk.ModifierType.ControlMask then
+      makeQuestion ())
+
+let newChatWindow (providers: Map<string, Provider>) =
   let builder = new Builder("ChatWindow.glade")
   let rawWindow = builder.GetRawOwnedObject "ChatWindow"
 
@@ -93,22 +108,22 @@ let newChatWindow (cfg: Config) =
 
   builder.Autoconnect window
   window.DeleteEvent.Add(fun _ -> Application.Quit())
+
+  confLlm providers builder
+  let answerStream = Channel.CreateUnbounded<string option>()
+  let questionAnswer = confSelector providers builder
+  let adjustment = builder.GetObject "text_adjustment" :?> Adjustment
+
+  let chatDisplay = confChatDisplay builder
+  let addText = addText chatDisplay adjustment
+  let chatInput = confChatInput builder
+
+  let makeQuestion () =
+    let question = printQuestion chatDisplay chatInput
+    questionAnswer () (question, answerStream)
+    readAnswer (answerStream, addText)
+
+  confChatInputEvent chatInput makeQuestion
+  confSend builder makeQuestion
   
-  let c =
-    { chatDisplay = builder.GetObject "chat_display" :?> TextView
-      userMessage = builder.GetObject "user_message" :?> Entry
-      send = builder.GetObject "send" :?> Button
-      textAdjusment = builder.GetObject "text_adjustment" :?> Adjustment
-      llmProvider = builder.GetObject "llm_provider" :?> ComboBoxText
-      llm = builder.GetObject "llm" :?> ComboBoxText
-      fonts = builder.GetObject "fonts" :?> FontButton
-      question = Channel.CreateUnbounded<string>()
-      answer = Channel.CreateUnbounded<string option>() }
-
-  confChatDisplay c
-  confUserMessage cfg c
-  confSend cfg c
-  confLlmProvider cfg.provider c
-  confLlm cfg.provider c
-
   window

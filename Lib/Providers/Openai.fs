@@ -1,8 +1,5 @@
 module R0b0t.Provider.Openai
 
-open System
-open System.Threading
-open System.Threading.Tasks
 open System.Threading.Channels
 
 open OpenAI
@@ -12,7 +9,7 @@ open OpenAI.ObjectModels.RequestModels
 
 open FSharp.Control
 
-open System.IO
+open Types
 
 let writeChan (chan: 'a Channel) (x: 'a) =
   x |> chan.Writer.WriteAsync |> _.AsTask() |> Async.AwaitTask
@@ -51,7 +48,7 @@ let answerWithData (key: string) (model: string) (context: string) (question: st
   let messages = messages @ [ ChatMessage.FromUser question ]
   streamAnswer client model chan messages
 
-let ask (key: string) (model: string) (question: string, chan: Channel<string option>) =
+let ask (key: Key) (model: Model) (question: string, chan: Channel<string option>) =
   match question with
   | "" -> chan.Writer.WriteAsync None |> _.AsTask() |> Async.AwaitTask |> Async.Start
   | _ ->
@@ -61,3 +58,15 @@ let ask (key: string) (model: string) (question: string, chan: Channel<string op
       return ()
     }
     |> Async.Start
+
+[<Literal>]
+let environmentVar = "openai_key"
+
+let getProvider (key: string) =
+  { name = "OpenAI"
+    models =
+      [ Models.Gpt_3_5_Turbo
+        Models.Gpt_4
+        Models.Gpt_3_5_Turbo_16k
+        Models.Gpt_4_turbo ]
+    implementation = ask key }
