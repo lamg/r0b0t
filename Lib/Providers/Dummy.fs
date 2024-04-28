@@ -13,6 +13,6 @@ let provider (answer: Channel<string option>) =
   Util.sendAnswer ys answer
 
 let getProvider () =
-    { name = "OpenAI"
-      models = [ "Dummy" ]
-      implementation = (fun _ (_, answer) -> provider answer) }
+  { name = "OpenAI"
+    models = [ "Dummy" ]
+    implementation = (fun _ (_, answer) -> provider answer) }

@@ -62,8 +62,14 @@ let ask (key: Key) (model: Model) (question: string, chan: Channel<string option
 [<Literal>]
 let environmentVar = "openai_key"
 
+[<Literal>]
+let providerName = "OpenAI"
+
+
+let defaultModel = Models.Gpt_3_5_Turbo
+
 let getProvider (key: string) =
-  { name = "OpenAI"
+  { name = providerName
     models =
       [ Models.Gpt_3_5_Turbo
         Models.Gpt_4

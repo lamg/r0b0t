@@ -24,12 +24,14 @@
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkBox" id="selection_box">
+            <property name="height-request">30</property>
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <child>
-              <object class="GtkComboBoxText" id="llm_provider">
+              <object class="GtkLabel" id="provider_label">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
+                <property name="label" translatable="yes">label</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -38,9 +40,10 @@
               </packing>
             </child>
             <child>
-              <object class="GtkComboBoxText" id="llm">
+              <object class="GtkLabel" id="model_label">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
+                <property name="label" translatable="yes">label</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -49,14 +52,10 @@
               </packing>
             </child>
             <child>
-              <object class="GtkMenuButton" id="preferencesq">
+              <object class="GtkSpinner" id="answer_spinner">
+                <property name="width-request">37</property>
                 <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="focus-on-click">False</property>
-                <property name="receives-default">True</property>
-                <child>
-                  <placeholder/>
-                </child>
+                <property name="can-focus">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -79,7 +78,7 @@
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label" translatable="yes">Ctrl+Enter to send</property>
+                <property name="label" translatable="yes">Ctrl+Enter to send, Ctrl+p to show menu</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -114,7 +113,7 @@
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <child>
-              <object class="GtkScrolledWindow" id="chat_scroll">
+              <object class="GtkScrolledWindow" id="chat_display_scroll">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="vadjustment">text_adjustment</property>
@@ -139,7 +138,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkScrolledWindow">
+              <object class="GtkScrolledWindow" id="chat_input_scroll">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="shadow-type">in</property>
@@ -164,6 +163,71 @@
           </packing>
         </child>
       </object>
+    </child>
+  </object>
+  <object class="GtkPopoverMenu" id="commands">
+    <property name="can-focus">False</property>
+    <property name="relative-to">chat_input</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkComboBoxText" id="llm_provider">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkComboBoxText" id="llm">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSearchEntry">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="primary-icon-name">edit-find-symbolic</property>
+            <property name="primary-icon-activatable">False</property>
+            <property name="primary-icon-sensitive">False</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkListBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+      <packing>
+        <property name="submenu">main</property>
+        <property name="position">1</property>
+      </packing>
     </child>
   </object>
 </interface>

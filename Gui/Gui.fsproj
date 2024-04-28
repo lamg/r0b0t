@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Controls.fs" />
+    <Compile Include="GetQuestion.fs" />
+    <Compile Include="ReadAnswer.fs" />
+    <Compile Include="SelectProviderModel.fs" />
+    <Compile Include="MakeQuestion.fs" />
+    <Compile Include="HandleCommands.fs" />
     <Compile Include="ChatWindow.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
