@@ -17,9 +17,7 @@ type AdjustWord =
     adjustment: Adjustment }
 
 type ProviderLlmSelectors =
-  { providerSelector: ComboBoxText
-    llmSelector: ComboBoxText
-    providerLabel: Label
+  { providerLabel: Label
     modelLabel: Label }
 
 type ClickSubscriber = (unit -> unit) -> unit
@@ -53,9 +51,12 @@ type StartStopInsert =
 
 let newStopInsert (di: DisplayInput) (builder: Builder) =
   let answerSpinner = builder.GetObject "answer_spinner" :?> Spinner
-  
+
   let adj = newAdjustWord di builder
-  {start = answerSpinner.Start; stop = answerSpinner.Stop; insertWord = insertWord adj}
+
+  { start = answerSpinner.Start
+    stop = answerSpinner.Stop
+    insertWord = insertWord adj }
 
 // DisplayInput
 
@@ -83,16 +84,11 @@ let newDisplayInput (b: Builder) =
 // ProviderLlm
 
 let newProviderLlm (b: Builder) =
-  let provider = b.GetObject "llm_provider" :?> ComboBoxText
-  let llm = b.GetObject "llm" :?> ComboBoxText
   let providerL = b.GetObject "provider_label" :?> Label
   let modelL = b.GetObject "model_label" :?> Label
 
-  { providerSelector = provider
-    llmSelector = llm
-    providerLabel = providerL
+  { providerLabel = providerL
     modelLabel = modelL }
-
 
 // commands menu
 
