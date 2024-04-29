@@ -197,19 +197,25 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTreeView">
+          <object class="GtkTreeView" id="command_view">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="model">command_list</property>
+            <property name="search-column">0</property>
             <child internal-child="selection">
-              <object class="GtkTreeSelection"/>
+              <object class="GtkTreeSelection">
+                <property name="mode">browse</property>
+              </object>
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">1</property>
           </packing>
+        </child>
+        <child>
+          <placeholder/>
         </child>
       </object>
       <packing>

@@ -90,6 +90,12 @@ let newProviderLlm (b: Builder) =
   { providerLabel = providerL
     modelLabel = modelL }
 
+let commandList (b: Builder) =
+  let commandList = b.GetObject "command_list" :?> ListStore
+  commandList.AppendValues [| "bla"; "bli" |] |> ignore
+  let tree = b.GetObject "command_view" :?> TreeView
+  tree.Model <- commandList
+
 // commands menu
 
 let newShowCommands (b: Builder) =

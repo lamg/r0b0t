@@ -18,6 +18,7 @@ let getImplementation (providers: Map<string, Provider>) (builder: Builder) =
           llm = R0b0t.Provider.Openai.defaultModel } }
 
   let selectors = newProviderLlm builder
+  commandList builder
   confProviderSelectorUpdate config selectors
 
 let readAnswer (builder: Builder) (di: DisplayInput) =
@@ -53,7 +54,7 @@ let newChatWindow (providers: Map<string, Provider>) =
   let showCommands = newShowCommands builder
 
   let getImp = getImplementation providers builder
-  
+
   let mq () =
     makeQuestion
       { getQuestion = GetQuestion.newGetQuestion di
