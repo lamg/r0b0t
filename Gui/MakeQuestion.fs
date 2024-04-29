@@ -3,7 +3,7 @@ module MakeQuestion
 open System.Threading.Channels
 
 type QuestionFlow =
-  { getQuestion: GetQuestion.GetQuestion
+  { getQuestion: Controls.GetQuestion
     getImplementation: SelectProviderModel.GetActiveImplementation
     readAnswer: ReadAnswer.ReadAnswer }
 

@@ -47,7 +47,6 @@ let newChatWindow (providers: Map<string, Provider>) =
   builder.Autoconnect window
   window.DeleteEvent.Add(fun _ -> Application.Quit())
 
-
   let di = newDisplayInput builder
 
   let showCommands = newShowCommands builder
@@ -56,7 +55,7 @@ let newChatWindow (providers: Map<string, Provider>) =
   
   let mq () =
     makeQuestion
-      { getQuestion = GetQuestion.newGetQuestion di
+      { getQuestion = newGetQuestion di
         getImplementation = getImp
         readAnswer = readAnswer builder di }
 

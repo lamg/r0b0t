@@ -25,8 +25,8 @@ let activateFirstModel (c: Config) (provider: string) =
           llm = c.providers[provider].models.Head } }
 
 let confProviderSelectorUpdate (c: Config) (p: ProviderLlmSelectors) =
-  p.providerLabel.Text <- c.active.provider
-  p.modelLabel.Text <- c.active.llm
+  p.providerLabel c.active.provider
+  p.modelLabel c.active.llm
 
   getActiveImplementation c
   : GetActiveImplementation
