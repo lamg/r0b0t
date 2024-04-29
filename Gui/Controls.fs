@@ -17,8 +17,10 @@ type AdjustWord =
     adjustment: Adjustment }
 
 type ProviderLlmSelectors =
-  { providerLabel: Label
-    modelLabel: Label }
+  { providerLabel: string -> unit
+    modelLabel: string -> unit }
+
+type GetQuestion = unit -> string
 
 type ClickSubscriber = (unit -> unit) -> unit
 
@@ -39,6 +41,16 @@ let insertWord ({ displayInput = di; adjustment = adj }: AdjustWord) : InsertWor
     di.chatDisplay.Buffer.PlaceCursor di.chatDisplay.Buffer.EndIter
     di.chatDisplay.Buffer.InsertAtCursor w
     adj.Value <- adj.Upper
+
+  f
+
+let newGetQuestion (di: DisplayInput) : GetQuestion =
+  let f () =
+    let question = di.chatInput.Buffer.Text
+
+    di.chatDisplay.Buffer.PlaceCursor di.chatDisplay.Buffer.EndIter
+    di.chatDisplay.Buffer.InsertAtCursor $"🧑: {question}\n🤖: "
+    question
 
   f
 
@@ -87,8 +99,8 @@ let newProviderLlm (b: Builder) =
   let providerL = b.GetObject "provider_label" :?> Label
   let modelL = b.GetObject "model_label" :?> Label
 
-  { providerLabel = providerL
-    modelLabel = modelL }
+  { providerLabel = fun s -> providerL.Text <- s
+    modelLabel = fun s -> modelL.Text <- s }
 
 let commandList (b: Builder) =
   let commandList = b.GetObject "command_list" :?> ListStore
