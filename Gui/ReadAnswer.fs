@@ -8,8 +8,13 @@ type AddText = string option -> unit
 
 type ReadAnswer = Channel<string option> -> unit
 
-type StopInsert = {stop: unit -> unit; insertWord: string -> unit }
-type StartAddText = {start: unit -> unit; addText: AddText }
+type StopInsert =
+  { stop: unit -> unit
+    insertWord: string -> unit }
+
+type StartAddText =
+  { start: unit -> unit
+    addText: AddText }
 
 let newAddText (stopInsert: StopInsert) (word: string option) =
   match word with
@@ -33,5 +38,6 @@ let readAnswer (sa: StartAddText) (answer: Channel<string option>) =
       if r.IsSome then
         return! loop ()
     }
-  sa.start()
+
+  sa.start ()
   loop () |> Async.AwaitTask |> Async.Start

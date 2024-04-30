@@ -52,7 +52,7 @@ let newChatWindow (providers: Map<string, Provider>) =
   let showCommands = newShowCommands builder
 
   let getImp = getImplementation providers builder
-  
+
   let mq () =
     makeQuestion
       { getQuestion = newGetQuestion di

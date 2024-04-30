@@ -20,14 +20,21 @@ let initProviders () =
 
 [<EntryPoint>]
 let main _ =
+  dotenv.net.DotEnv.Load()
+
   Application.Init()
   let app = new Application("r0b0t.lamg.github.com", GLib.ApplicationFlags.None)
   app.Register(GLib.Cancellable.Current) |> ignore
 
   let ps = initProviders ()
-  let win = Chat.newChatWindow ps
 
-  app.AddWindow(win)
-  win.Show()
-  Application.Run()
-  0
+  if ps.Keys.Contains Provider.Openai.providerName then
+    let win = Chat.newChatWindow ps
+
+    app.AddWindow win
+    win.Show()
+    Application.Run()
+    0
+  else
+    eprintfn $"Failed to get value of environment variable {Provider.Openai.environmentVar}"
+    1

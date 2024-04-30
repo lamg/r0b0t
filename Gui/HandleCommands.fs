@@ -5,7 +5,7 @@ type Commands =
     makeQuestion: unit -> unit }
 
 let handleKeyPress (commands: Commands) (e: Gdk.EventKey) =
-  match e.Key, e.State with
-  | Gdk.Key.Return, Gdk.ModifierType.ControlMask -> commands.makeQuestion ()
-  | Gdk.Key.p, Gdk.ModifierType.ControlMask -> commands.showCommands ()
+  match e.Key with
+  | Gdk.Key.Return when e.State.HasFlag Gdk.ModifierType.ControlMask -> commands.makeQuestion ()
+  | Gdk.Key.p when e.State.HasFlag Gdk.ModifierType.ControlMask -> commands.showCommands ()
   | _ -> ()
