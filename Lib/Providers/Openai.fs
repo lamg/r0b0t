@@ -66,7 +66,7 @@ let environmentVar = "openai_key"
 let providerName = "OpenAI"
 
 
-let defaultModel = Models.Gpt_3_5_Turbo
+let defaultModel = Models.Gpt_4_turbo
 
 let getProvider (key: string) =
   { name = providerName

@@ -52,13 +52,21 @@ let newChatWindow (providers: Map<string, Provider>) =
 
   let showCommands = newShowCommands builder
 
-  let getImp = getImplementation providers builder
+
+  //let getImp = getImplementation providers builder
 
   let mq () =
-    makeQuestion
-      { getQuestion = newGetQuestion di
-        getImplementation = getImp
-        readAnswer = readAnswer builder di }
+    let rs = newGetQuestion di |> makeQuestion2
+    let si = newStopInsert di builder
+
+    let addText: ReadAnswer.StartAddText =
+      { start = si.start
+        addText =
+          ReadAnswer.newAddText
+            { stop = si.stop
+              insertWord = si.insertWord } }
+
+    ReadAnswer.readAnswer2 addText rs
 
   let cmds =
     { makeQuestion = mq
