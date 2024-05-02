@@ -17,10 +17,11 @@ let makeQuestion (flow: QuestionFlow) =
   flow.readAnswer answer
 
 let makeQuestion2 (gq: Controls.GetQuestion) =
-  let mb = MailboxProcessor.Start R0b0t.Provider.Dummy.provider2
   let question = gq ()
 
-  Question question |> mb.Post
+  let mb =
+    R0b0t.Provider.Openai.ask2 "key" OpenAI.ObjectModels.Models.Gpt_4_turbo question
+
 
   let pr x () =
     mb.PostAndTryAsyncReply(x, timeout = 10000)

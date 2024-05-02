@@ -6,6 +6,7 @@ open OpenAI
 open OpenAI.Managers
 open OpenAI.ObjectModels
 open OpenAI.ObjectModels.RequestModels
+open OpenAI.ObjectModels.ResponseModels
 
 open FSharp.Control
 
@@ -76,3 +77,40 @@ let getProvider (key: string) =
         Models.Gpt_3_5_Turbo_16k
         Models.Gpt_4_turbo ]
     implementation = ask key }
+
+let readSegments (inbox: MailboxProcessor<Message>) resp =
+  resp
+  |> AsyncSeq.ofAsyncEnum
+  |> AsyncSeq.takeWhileAsync (fun (x: ChatCompletionCreateResponse) ->
+    async {
+
+      let segment =
+        if x.Successful then
+          x.Choices |> Seq.head |> (fun y -> y.Message.Content)
+        else
+          ""
+
+      let! msg = inbox.Receive()
+
+      return
+        match msg with
+        | AnswerSegment chan ->
+          chan.Reply segment
+          true
+        | _ -> false
+    })
+  |> AsyncSeq.toListAsync
+  |> Async.Ignore
+
+let stream (key: Key) (model: Model) (question: string) =
+  let client = new OpenAIService(OpenAiOptions(ApiKey = key))
+
+  let messages =
+    [ ChatMessage.FromSystem($"You are a helpful AI assistant")
+      ChatMessage.FromUser question ]
+    |> ResizeArray
+
+  client.CreateCompletionAsStream(ChatCompletionCreateRequest(Model = model, Messages = messages))
+
+let ask2 (key: Key) (model: Model) (question: string) =
+  MailboxProcessor.Start(fun inbox -> stream key model question |> readSegments inbox)
