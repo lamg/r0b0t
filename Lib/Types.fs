@@ -1,16 +1,25 @@
 module Types
 
-open System.Threading.Channels
+open FSharp.Control
 
 type Key = string
 type Model = string
-
-type Provider =
-  { name: string
-    models: string list
-    implementation: Model -> (string * Channel<string option>) -> unit }
+type Provider = string
+type Question = string
 
 type Message =
-  | Question of string
   | AnswerSegment of AsyncReplyChannel<string>
   | Stop of AsyncReplyChannel<string>
+
+type Answerer = Question -> MailboxProcessor<Message>
+
+type ProviderAnswerers =
+  { name: string
+    models: Model list
+    modelAnswerer: Model -> Answerer }
+
+type ProviderModel = { provider: Provider; model: Model }
+
+type Config =
+  { providers: Map<string, ProviderAnswerers>
+    active: ProviderModel }

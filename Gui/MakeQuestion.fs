@@ -1,30 +1,22 @@
 module MakeQuestion
 
-open System.Threading.Channels
+open FSharp.Control
 
 open Types
 
-type QuestionFlow =
-  { getQuestion: Controls.GetQuestion
-    getImplementation: SelectProviderModel.GetActiveImplementation
-    readAnswer: ReadAnswer.ReadAnswer }
+type QuestionAnswerer =
+  { getQuestion: unit -> Question
+    answerer: Answerer }
 
-let makeQuestion (flow: QuestionFlow) =
-  let answer = Channel.CreateUnbounded<string option>()
-  let imp = flow.getImplementation ()
-  let question = flow.getQuestion ()
-  imp (question, answer)
-  flow.readAnswer answer
+type ReadStop =
+  { stop: unit -> Async<string option>
+    read: unit -> Async<string option> }
 
-let makeQuestion2 (gq: Controls.GetQuestion) =
-  let mb = MailboxProcessor.Start R0b0t.Provider.Dummy.provider2
-  let question = gq ()
-
-  Question question |> mb.Post
+let makeQuestion (qa: QuestionAnswerer) =
+  let mb = qa.getQuestion () |> qa.answerer
 
   let pr x () =
     mb.PostAndTryAsyncReply(x, timeout = 10000)
 
   { stop = pr Stop
     read = pr AnswerSegment }
-  : ReadAnswer.ReadStop

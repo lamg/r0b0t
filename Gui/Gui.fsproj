@@ -9,6 +9,12 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OtherFlags>--sig:Gui.fsi</OtherFlags>
+  </PropertyGroup>    
+
   <ItemGroup>
     <Compile Include="Controls.fs" />
     <Compile Include="ReadAnswer.fs" />

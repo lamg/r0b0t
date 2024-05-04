@@ -1,41 +1,31 @@
 module R0b0t.Provider.Dummy
 
 open System
-open System.Threading
-open System.Threading.Tasks
-open System.Threading.Channels
-
 open Types
+open FSharp.Control
 
-let provider (answer: Channel<string option>) =
-  let xs = Guid.NewGuid().ToString().Split("-")
-  let ys = "dummy" :: (List.ofArray xs)
-  Util.sendAnswer ys answer
+let ask (_: Model) (_: Question) =
+  let xs = Guid.NewGuid().ToString().Split "-"
 
-let getProvider () =
-  { name = "OpenAI"
-    models = [ "Dummy" ]
-    implementation = (fun _ (_, answer) -> provider answer) }
+  let ays =
+    AsyncSeq.unfoldAsync
+      (fun i ->
+        async {
+          do! Async.Sleep 400
 
-let provider2 (inbox: MailboxProcessor<Message>) =
-  let rec loop (xs: string list) =
-    async {
-      // Receive a message
-      let! msg = inbox.Receive()
-      do! Async.Sleep 500
+          return if i < xs.Length then Some($"{xs[i]} ", i + 1) else None
+        })
+      0
 
-      return!
-        match msg, xs with
-        | Question q, _ -> loop xs
-        | AnswerSegment chan, y :: ys ->
-          chan.Reply $" {y}"
-          loop ys
-        | Stop chan, _
-        | AnswerSegment chan, _ ->
-          chan.Reply "\n\n"
-          async { () }
-    }
+  MailboxProcessor.Start(fun inbox -> Util.readSegments inbox ays)
 
-  let xs = Guid.NewGuid().ToString().Split("-")
-  let ys = "dummy" :: (List.ofArray xs)
-  loop ys
+[<Literal>]
+let providerName = "Dummy"
+
+[<Literal>]
+let defaultModel = "Dummy"
+
+let getProvider (_: Key) =
+  { name = providerName
+    models = [ defaultModel ]
+    modelAnswerer = ask }

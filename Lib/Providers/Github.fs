@@ -186,24 +186,28 @@ let answer (auth: GithubAuth) (question: string, consumer: Channel<string option
 
 // TODO make more flexible interface so this mutable can go away
 // ouath token looks like "ghu_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" and has length 40
-let mutable auth = { oauthToken = ""; token = "bla" }
+let mutable auth: GithubAuth option = None
 
-let ask (key: string) (_: string) (question: string, c: Channel<string option>) =
-  let nauth, s = answer { oauthToken = key; token = "" } (question, c)
+let ask (key: Key) (_: Model) (question: string) =
+  let currentAuth = auth |> Option.defaultValue { oauthToken = key; token = "" }
 
-  async {
-    let! _ = s
-    return ()
-  }
-  |> Async.Start
-  //printfn $"s = {s |> Async.RunSynchronously}"
-  //printfn $"nauth = {nauth}"
-  auth <- nauth
+  let nauth, xs = chatCompletion currentAuth question
+
+  auth <- Some nauth
+  MailboxProcessor.Start(fun inbox -> xs |> Util.readSegments inbox)
+
+
+[<Literal>]
+let providerName = "GitHub"
+
+[<Literal>]
+let defaultModel = "Copilot"
+
 
 [<Literal>]
 let environmentVar = "github_key"
 
 let getProvider (key: string) =
-  { name = "GitHub"
-    models = [ "Copilot" ]
-    implementation = ask key }
+  { name = providerName
+    models = [ defaultModel ]
+    modelAnswerer = ask key }
