@@ -1,38 +1,16 @@
-module Chat
+module ChatWindow
 
 open Gtk
 open Types
 open MakeQuestion
 open HandleCommands
-open SelectProviderModel
 open Controls
 
 type ChatWindow(baseBuilder: nativeint) =
   inherit Window(baseBuilder)
 
-let getImplementation (providers: Map<string, Provider>) (builder: Builder) =
-  let config =
-    { providers = providers
-      active =
-        { provider = R0b0t.Provider.Openai.providerName
-          llm = R0b0t.Provider.Openai.defaultModel } }
 
-  let selectors = newProviderLlm builder
-  confProviderSelectorUpdate config selectors
-
-let readAnswer (builder: Builder) (di: DisplayInput) =
-  let si = newStopInsert di builder
-
-  let addText: ReadAnswer.StartAddText =
-    { start = si.start
-      addText =
-        ReadAnswer.newAddText
-          { stop = si.stop
-            insertWord = si.insertWord } }
-
-  ReadAnswer.readAnswer addText: ReadAnswer.ReadAnswer
-
-let newChatWindow (providers: Map<string, Provider>) =
+let newChatWindow (providers: Map<string, ProviderAnswerers>) =
   let builder = new Builder("ChatWindow.glade")
   let rawWindow = builder.GetRawOwnedObject "ChatWindow"
 
@@ -51,20 +29,23 @@ let newChatWindow (providers: Map<string, Provider>) =
 
   let showCommands = newShowCommands builder
 
-  //let getImp = getImplementation providers builder
+  let conf =
+    { providers = providers
+      active =
+        { provider = R0b0t.Provider.Github.providerName
+          model = R0b0t.Provider.Github.defaultModel } }
+
+  displayProviderModel builder conf.active.provider conf.active.model
 
   let mq () =
-    let rs = newGetQuestion di |> makeQuestion2
-    let si = newStopInsert di builder
+    let qa =
+      { getQuestion = newGetQuestion di
+        answerer = SelectProviderModel.getActiveAnswerer conf }
 
-    let addText: ReadAnswer.StartAddText =
-      { start = si.start
-        addText =
-          ReadAnswer.newAddText
-            { stop = si.stop
-              insertWord = si.insertWord } }
+    let sa = newStopInsert di builder |> newStartAddText
 
-    ReadAnswer.readAnswer2 addText rs
+    let sr = MakeQuestion.makeQuestion qa // connect later sr.stop with GUI
+    ReadAnswer.readAnswer sa sr.read
 
   let cmds =
     { makeQuestion = mq

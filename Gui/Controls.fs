@@ -2,6 +2,8 @@ module Controls
 
 open Gtk
 
+open Types
+
 type DisplayInput =
   { chatDisplay: TextView
     chatInput: TextView }
@@ -16,9 +18,7 @@ type AdjustWord =
   { displayInput: DisplayInput
     adjustment: Adjustment }
 
-type ProviderLlmSelectors =
-  { providerLabel: string -> unit
-    modelLabel: string -> unit }
+type SetProviderModel = Provider -> Model -> unit
 
 type GetQuestion = unit -> string
 
@@ -70,6 +70,29 @@ let newStopInsert (di: DisplayInput) (builder: Builder) =
     stop = answerSpinner.Stop
     insertWord = insertWord adj }
 
+type StopInsert =
+  { stop: unit -> unit
+    insertWord: string -> unit }
+
+let newAddText (stopInsert: StopInsert) (word: string option) =
+  match word with
+  | Some w -> stopInsert.insertWord w
+
+  | None ->
+    stopInsert.insertWord "\n\n"
+    stopInsert.stop ()
+
+type StartAddText =
+  { start: unit -> unit
+    addText: string option -> unit }
+
+let newStartAddText (ssi: StartStopInsert) =
+  { start = ssi.start
+    addText =
+      newAddText
+        { stop = ssi.stop
+          insertWord = ssi.insertWord } }
+
 // DisplayInput
 
 let newChatInput (b: Builder) =
@@ -95,12 +118,12 @@ let newDisplayInput (b: Builder) =
 
 // ProviderLlm
 
-let newProviderLlm (b: Builder) =
+let displayProviderModel (b: Builder) (p: Provider) (m: Model) =
   let providerL = b.GetObject "provider_label" :?> Label
   let modelL = b.GetObject "model_label" :?> Label
 
-  { providerLabel = fun s -> providerL.Text <- s
-    modelLabel = fun s -> modelL.Text <- s }
+  providerL.Text <- p
+  modelL.Text <- m
 
 // commands menu
 
