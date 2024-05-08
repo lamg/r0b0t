@@ -7,13 +7,8 @@
     <PackageId>r0b0t</PackageId>
     <ToolCommandName>r0b0t</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <OtherFlags>--sig:Gui.fsi</OtherFlags>
-  </PropertyGroup>    
 
   <ItemGroup>
     <Compile Include="Controls.fs" />
