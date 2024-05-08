@@ -1,19 +1,20 @@
 module R0b0t.Provider.Util
 
-open System
-open System.Threading
-open System.Threading.Tasks
-open System.Threading.Channels
+open FSharp.Control
+open Types
 
-let sendAnswer (xs: string seq) (answer: Channel<string option>) =
-  task {
-    let tks = new CancellationTokenSource(TimeSpan.FromSeconds 2)
+let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<string>) =
+  xs
+  |> AsyncSeq.takeWhileAsync (fun x ->
+    async {
+      let! msg = inbox.Receive()
 
-    for x in xs do
-      do! Task.Delay 100
-      do! answer.Writer.WriteAsync(Some $"{x} ", tks.Token).AsTask()
-
-    do! answer.Writer.WriteAsync None
-  }
-  |> Async.AwaitTask
-  |> Async.Start
+      return
+        match msg with
+        | AnswerSegment chan ->
+          chan.Reply x
+          true
+        | _ -> false
+    })
+  |> AsyncSeq.toListAsync
+  |> Async.Ignore

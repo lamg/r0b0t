@@ -1,7 +1,6 @@
 open System
 open Gtk
 open Types
-open OpenAI.ObjectModels
 
 open R0b0t
 
@@ -10,7 +9,8 @@ let getenv s =
 
 let initProviders () =
   [ getenv Provider.Openai.environmentVar, Provider.Openai.getProvider
-    getenv Provider.Github.environmentVar, Provider.Github.getProvider ]
+    getenv Provider.Github.environmentVar, Provider.Github.getProvider
+    Some "", Provider.Dummy.getProvider ]
   |> List.choose (function
     | Some k, f ->
       let p = f k
@@ -29,7 +29,7 @@ let main _ =
   let ps = initProviders ()
 
   if ps.Keys.Contains Provider.Openai.providerName then
-    let win = Chat.newChatWindow ps
+    let win = ChatWindow.newChatWindow ps
 
     app.AddWindow win
     win.Show()
