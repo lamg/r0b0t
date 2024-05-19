@@ -33,8 +33,8 @@ let newChatWindow (providers: Map<string, ProviderAnswerers>) =
   let conf =
     { providers = providers
       active =
-        { provider = R0b0t.Provider.Github.providerName
-          model = R0b0t.Provider.Github.defaultModel } }
+        { provider = R0b0t.Provider.Openai.providerName
+          model = R0b0t.Provider.Openai.defaultModel } }
 
   displayProviderModel builder conf.active.provider conf.active.model
 

@@ -38,7 +38,7 @@ let environmentVar = "openai_key"
 [<Literal>]
 let providerName = "OpenAI"
 
-let defaultModel = Models.Gpt_4_turbo
+let defaultModel = Models.Gpt_4o
 
 let getProvider (key: Key) =
   { name = providerName
@@ -46,5 +46,6 @@ let getProvider (key: Key) =
       [ Models.Gpt_3_5_Turbo
         Models.Gpt_4
         Models.Gpt_3_5_Turbo_16k
-        Models.Gpt_4_turbo ]
+        Models.Gpt_4_turbo
+        Models.Gpt_4o ]
     modelAnswerer = ask key }
