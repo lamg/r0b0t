@@ -36,6 +36,20 @@ let newAdjustWord (di: DisplayInput) (b: Builder) =
   { displayInput = di
     adjustment = adjustment }
 
+type PngBase64 = string
+
+let insertImage (chatDisplay: TextView) (content: PngBase64) =
+  let byteArray = System.Convert.FromBase64String content
+  //let p = new Gdk.Pixbuf(byteArray)
+  System.IO.File.WriteAllBytes("logo.png", byteArray)
+  // Logo for blog "Structured Programming in F#"
+  let p = new Gdk.PixbufLoader(byteArray)
+
+  let img = new Image(p.Pixbuf)
+  let buff = chatDisplay.Buffer
+  let anchor = buff.CreateChildAnchor(ref buff.EndIter)
+  chatDisplay.AddChildAtAnchor(img, anchor)
+
 let insertWord ({ displayInput = di; adjustment = adj }: AdjustWord) : InsertWord =
   let f w =
     di.chatDisplay.Buffer.PlaceCursor di.chatDisplay.Buffer.EndIter
@@ -59,7 +73,8 @@ let newGetQuestion (di: DisplayInput) : GetQuestion =
 type StartStopInsert =
   { stop: unit -> unit
     start: unit -> unit
-    insertWord: InsertWord }
+    insertWord: InsertWord
+    insertImage: PngBase64 -> unit }
 
 let newStopInsert (di: DisplayInput) (builder: Builder) =
   let answerSpinner = builder.GetObject "answer_spinner" :?> Spinner
@@ -68,7 +83,8 @@ let newStopInsert (di: DisplayInput) (builder: Builder) =
 
   { start = answerSpinner.Start
     stop = answerSpinner.Stop
-    insertWord = insertWord adj }
+    insertWord = insertImage di.chatDisplay
+    insertImage = insertImage di.chatDisplay }
 
 type StopInsert =
   { stop: unit -> unit

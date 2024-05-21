@@ -5,13 +5,13 @@ open FSharp.Control
 type Key = string
 type Model = string
 type Provider = string
-type Question = string
+type Prompt = string
 
 type Message =
   | AnswerSegment of AsyncReplyChannel<string>
   | Stop of AsyncReplyChannel<string>
 
-type Answerer = Question -> MailboxProcessor<Message>
+type Answerer = Prompt -> MailboxProcessor<Message>
 
 type ProviderAnswerers =
   { name: string

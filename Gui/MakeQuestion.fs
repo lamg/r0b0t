@@ -5,7 +5,7 @@ open FSharp.Control
 open Types
 
 type QuestionAnswerer =
-  { getQuestion: unit -> Question
+  { getQuestion: unit -> Prompt
     answerer: Answerer }
 
 type ReadStop =
@@ -16,7 +16,7 @@ let makeQuestion (qa: QuestionAnswerer) =
   let mb = qa.getQuestion () |> qa.answerer
 
   let pr x () =
-    mb.PostAndTryAsyncReply(x, timeout = 10000)
+    mb.PostAndTryAsyncReply(x, timeout = 160000)
 
   { stop = pr Stop
     read = pr AnswerSegment }

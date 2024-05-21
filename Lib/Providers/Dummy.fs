@@ -4,7 +4,7 @@ open System
 open Types
 open FSharp.Control
 
-let ask (_: Model) (_: Question) =
+let ask (_: Model) (_: Prompt) =
   let xs = Guid.NewGuid().ToString().Split "-"
 
   let ays =
