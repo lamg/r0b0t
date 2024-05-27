@@ -7,7 +7,7 @@ type Prompt = string
 
 type ProviderImpl =
   { models: Model list
-    answerer: Model -> Prompt -> AsyncSeq<string> }
+    answerer: Model -> Prompt -> AsyncSeq<string option> }
 
 type Key = string
 type KeyEnvVar = string
@@ -40,7 +40,7 @@ let initConf (xs: ProviderModule list) (_default: Provider) =
   { active = active
     providers = providers }
 
-let getProvider (conf: unit -> Conf) (getPrompt: unit -> Prompt) : Stream.Types.GetProvider =
+let newGetProvider (conf: unit -> Conf) (getPrompt: unit -> Prompt) : Stream.Types.GetProvider =
   fun () ->
     let c = conf ()
     let prompt = getPrompt ()

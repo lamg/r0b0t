@@ -13,11 +13,15 @@ open GetProviderImpl
 let toAsyncSeqString resp =
   resp
   |> AsyncSeq.ofAsyncEnum
-  |> AsyncSeq.choose (fun (x: ChatCompletionCreateResponse) ->
+  |> AsyncSeq.map (fun (x: ChatCompletionCreateResponse) ->
+
     if x.Successful then
       x.Choices |> Seq.head |> _.Message.Content |> Some
     else
       None)
+  |> fun xs ->
+      let last = [ None ] |> AsyncSeq.ofSeq
+      AsyncSeq.append xs last
 
 let stream (key: Key) (model: Model) (question: string) =
   let client = new OpenAIService(OpenAiOptions(ApiKey = key))

@@ -3,10 +3,10 @@ module Stream.Producer
 open Types
 open FSharp.Control
 
-type Message = AnswerSegment of AsyncReplyChannel<string>
+type Message = AnswerSegment of AsyncReplyChannel<string option>
 type Provider = MailboxProcessor<Message> -> Async<unit>
 
-let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<string>) =
+let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<string option>) =
   xs
   |> AsyncSeq.takeWhileAsync (fun x ->
     async {
@@ -16,7 +16,7 @@ let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<string>) =
         match msg with
         | Some(AnswerSegment chan) ->
           chan.Reply x
-          true
+          x.IsSome
         | _ -> false
     })
   |> AsyncSeq.toListAsync
@@ -24,4 +24,4 @@ let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<string>) =
 
 let produceStream (g: GetProvider) =
   let mb = MailboxProcessor.Start(fun inbox -> g () |> readSegments inbox)
-  fun () -> mb.PostAndTryAsyncReply(AnswerSegment, timeout = 1000)
+  fun () -> mb.PostAndTryAsyncReply(AnswerSegment, timeout = 65000)

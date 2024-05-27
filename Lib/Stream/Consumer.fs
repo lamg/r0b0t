@@ -4,14 +4,19 @@ open Types
 
 let consumeStream (si: StopInsert) (read: Stream) =
   let rec loop () =
-    task {
+    async {
       let! r = read ()
 
       match r with
-      | Some w ->
+      | Some(Some w) ->
         si.insertWord w
         return! loop ()
-      | None -> si.stop ()
+      | Some None ->
+        // sequence fully consumed
+        si.stop ()
+      | None ->
+        // timeout
+        si.stop ()
     }
 
-  loop () |> Async.AwaitTask |> Async.Start
+  loop () |> Async.Start

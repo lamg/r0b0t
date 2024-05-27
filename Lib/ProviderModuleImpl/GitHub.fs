@@ -91,9 +91,11 @@ let asyncBody (r: Response) =
       | [| _; "[DONE]" |] -> ()
       | [| _; x |] ->
         match (JsonSerializer.Deserialize<CompletionChunk> x).choices with
-        | [ { delta = { content = Some x } } ] -> yield x
+        | [ { delta = { content = Some x } } ] -> yield Some x
         | _ -> ()
       | _ -> ()
+
+    yield None
   }
 
 let sendChatReq (token: string) (userMsg: string) =
@@ -140,7 +142,8 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
       | Ok r when r.statusCode = HttpStatusCode.OK -> { auth with token = token }, asyncBody r
       | Ok r when r.statusCode = HttpStatusCode.Unauthorized && retries = retriesLimit ->
         auth,
-        [ $"{retriesLimit} Github authentication attemps failed, stopping now" ]
+        [ Some $"{retriesLimit} Github authentication attemps failed, stopping now"
+          None ]
         |> AsyncSeq.ofSeq
       | Ok r when
         r.statusCode = HttpStatusCode.Unauthorized
@@ -149,7 +152,7 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
         //printfn $"body {r.content.ReadAsStringAsync().Result}"
         match getAuthorizationFromKey auth.oauthToken with
         | Ok r -> retryLoop r.token (retries + 1)
-        | Error e -> auth, [ e.ToString() ] |> AsyncSeq.ofSeq
+        | Error e -> auth, [ e.ToString() |> Some; None ] |> AsyncSeq.ofSeq
       | Ok r ->
         auth,
         asyncSeq {
@@ -157,9 +160,11 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
 
           while not reader.EndOfStream do
             let! line = reader.ReadLineAsync() |> Async.AwaitTask
-            yield line
+            yield (Some line)
+
+          yield None
         }
-      | Error e -> auth, [ e.ToString() ] |> AsyncSeq.ofSeq
+      | Error e -> auth, [ e.ToString() |> Some; None ] |> AsyncSeq.ofSeq
 
   retryLoop auth.token 0
 
@@ -173,7 +178,7 @@ let answer (auth: GithubAuth) (question: string, consumer: Channel<string option
       |> AsyncSeq.foldAsync
         (fun text s ->
           async {
-            do! consumer.Writer.WriteAsync(Some s) |> _.AsTask() |> Async.AwaitTask
+            do! consumer.Writer.WriteAsync s |> _.AsTask() |> Async.AwaitTask
             return $"{text}{s}"
           })
         ""

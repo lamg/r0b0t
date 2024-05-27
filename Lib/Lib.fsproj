@@ -12,13 +12,21 @@
     <Compile Include="Stream/Main.fs" />
 
     <Compile Include="GetProviderImpl.fs" />
-    <Compile Include="StopInsertImpl.fs" />
 
     <Compile Include="ProviderModuleImpl/GitHub.fs" />
     <Compile Include="ProviderModuleImpl/OpenAI.fs" />
 
+    <Compile Include="GUI.fs" />
+
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="**\*.glade" />
+    <EmbeddedResource Include="**\*.glade">
+      <LogicalName>%(Filename)%(Extension)</LogicalName>
+  </EmbeddedResource>
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="Betalgo.OpenAI" Version="8.2.2" />
     <PackageReference Include="dotenv.net" Version="3.1.3" />
