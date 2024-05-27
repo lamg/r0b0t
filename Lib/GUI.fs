@@ -57,6 +57,14 @@ let newConf () =
 type ChatWindow(baseBuilder: nativeint) =
   inherit Window(baseBuilder)
 
+let displayProviderModel (b: Builder) (a: Active) =
+  let providerL = b.GetObject "provider_label" :?> Label
+  let modelL = b.GetObject "model_label" :?> Label
+
+  providerL.Text <- a.provider
+  modelL.Text <- a.model
+
+
 let newWindow () =
   let builder = new Builder("GUI.glade")
   let rawWindow = builder.GetRawOwnedObject "ChatWindow"
@@ -74,6 +82,7 @@ let newWindow () =
 
 
   let mutable conf = newConf ()
+  displayProviderModel builder conf.active
   let io = newInputOutput builder
   let getProvider = newGetProvider (fun _ -> conf) io.getPrompt
   let answerSpinner = builder.GetObject "answer_spinner" :?> Spinner

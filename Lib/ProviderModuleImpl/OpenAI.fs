@@ -33,18 +33,18 @@ let stream (key: Key) (model: Model) (question: string) =
 
   client.CreateCompletionAsStream(ChatCompletionCreateRequest(Model = model, Messages = messages))
 
-let ask (key: Key) (model: GetProviderImpl.Model) (question: Prompt) =
+let ask (key: Key) (model: Model) (question: Prompt) =
   stream key model question |> toAsyncSeqString
 
-let providerModule: GetProviderImpl.ProviderModule =
+let providerModule: ProviderModule =
   { provider = "OpenAI"
     keyVar = "openai_key"
     implementation =
       fun key ->
         { answerer = ask key
           models =
-            [ Models.Gpt_3_5_Turbo
+            [ Models.Gpt_4o
+              Models.Gpt_3_5_Turbo
               Models.Gpt_4
               Models.Gpt_3_5_Turbo_16k
-              Models.Gpt_4_turbo
-              Models.Gpt_4o ] } }
+              Models.Gpt_4_turbo ] } }

@@ -2,6 +2,29 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
+  <object class="GtkEntryBuffer" id="chat_buffer">
+    <property name="text" translatable="yes">Write your question here</property>
+  </object>
+  <object class="GtkListStore" id="command_list">
+    <columns>
+      <!-- column-name commands -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">command0</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">command1</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkAdjustment" id="text_adjustment">
+    <property name="upper">100</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">10</property>
+    <property name="page-size">10</property>
+  </object>
   <object class="GtkWindow" id="ChatWindow">
     <property name="width-request">400</property>
     <property name="height-request">600</property>
@@ -131,20 +154,6 @@
                 <property name="position">0</property>
               </packing>
             </child>
-            <child>
-              <object class="GtkButton" id="send">
-                <property name="label" translatable="yes">📨</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="pack-type">end</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -155,23 +164,6 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkEntryBuffer" id="chat_buffer">
-    <property name="text" translatable="yes">Write your question here</property>
-  </object>
-  <object class="GtkListStore" id="command_list">
-    <columns>
-      <!-- column-name commands -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">command0</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">command1</col>
-      </row>
-    </data>
   </object>
   <object class="GtkPopoverMenu" id="commands">
     <property name="can-focus">False</property>
@@ -223,11 +215,5 @@
         <property name="position">1</property>
       </packing>
     </child>
-  </object>
-  <object class="GtkAdjustment" id="text_adjustment">
-    <property name="upper">100</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">10</property>
-    <property name="page-size">10</property>
   </object>
 </interface>
