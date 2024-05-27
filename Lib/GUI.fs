@@ -33,12 +33,15 @@ let newInputOutput (b: Builder) : InputOutput =
 
     keyRelease = chatInput.KeyReleaseEvent.Add
     insertWord =
-      (function
-      | w when w = String.Empty || isNull w -> ()
-      | w ->
+      (fun w ->
+        let word =
+          match w with
+          | w when w = String.Empty || isNull w -> "\n\n"
+          | w -> w
+
         GLib.Idle.Add(fun _ ->
           chatDisplay.Buffer.PlaceCursor chatDisplay.Buffer.EndIter
-          chatDisplay.Buffer.InsertAtCursor w
+          chatDisplay.Buffer.InsertAtCursor word
           adjustment.Value <- adjustment.Upper
           false)
         |> ignore) }
