@@ -1,4 +1,4 @@
-module StreamDeps.StopInsert
+module StopInsertImpl
 
 open Gtk
 open Stream.Types

@@ -11,9 +11,11 @@
     <Compile Include="Stream/Producer.fs" />
     <Compile Include="Stream/Main.fs" />
 
-    <Compile Include="GetProvider.fs" />
-    <Compile Include="StopInsert.fs" />
+    <Compile Include="GetProviderImpl.fs" />
+    <Compile Include="StopInsertImpl.fs" />
 
+    <Compile Include="ProviderModuleImpl/GitHub.fs" />
+    <Compile Include="ProviderModuleImpl/OpenAI.fs" />
 
   </ItemGroup>
 

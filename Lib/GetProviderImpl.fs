@@ -1,4 +1,4 @@
-module StreamDeps.GetProvider
+module GetProviderImpl
 
 open FSharp.Control
 
