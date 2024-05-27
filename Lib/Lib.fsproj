@@ -1,14 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="Types.fs" />
-    <Compile Include="Providers\Util.fs" />
-    <Compile Include="Providers\Openai.fs" />
-    <Compile Include="Providers\Github.fs" />
-    <Compile Include="Providers\Dummy.fs" />
+    <Compile Include="Stream/Types.fs" />
+    <Compile Include="Stream/Consumer.fs" />
+    <Compile Include="Stream/Producer.fs" />
+    <Compile Include="Stream/Main.fs" />
+
+    <Compile Include="GetProvider.fs" />
+    <Compile Include="StopInsert.fs" />
+
+
   </ItemGroup>
 
   <ItemGroup>
@@ -16,6 +22,7 @@
     <PackageReference Include="dotenv.net" Version="3.1.3" />
     <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
     <PackageReference Include="FsHttp" Version="14.5.0" />
+    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
   </ItemGroup>
 
 </Project>
