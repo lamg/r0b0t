@@ -12,9 +12,6 @@ let newConf () =
   let _default = ProviderModuleImpl.OpenAI.providerModule.provider
   initConf providers _default
 
-type ChatWindow(baseBuilder: nativeint) =
-  inherit Window(baseBuilder)
-
 let displayProviderModel (b: Builder) (a: Active) =
   let providerL = b.GetObject "provider_label" :?> Label
   let modelL = b.GetObject "model_label" :?> Label
@@ -25,29 +22,17 @@ let displayProviderModel (b: Builder) (a: Active) =
 
 let newWindow () =
   let builder = new Builder("GUI.glade")
-  let rawWindow = builder.GetRawOwnedObject "ChatWindow"
-
-  let window = new ChatWindow(rawWindow)
-
-  let height = Gdk.Screen.Default.RootWindow.Height
-  let width = Gdk.Screen.Default.RootWindow.Width
-  window.HeightRequest <- height / 2
-  window.WidthRequest <- width / 4
-  window.Title <- "r0b0t"
-
-  builder.Autoconnect window
-  window.DeleteEvent.Add(fun _ -> Application.Quit())
-
+  let w = newWindow builder
   let mutable conf = newConf ()
 
-  conf <-
-    { conf with
-        active.model = OpenAI.ObjectModels.Models.Dall_e_3 }
 
   displayProviderModel builder conf.active
-  let io = newInputOutput builder
+  let io = newInputOutput w builder
   let getProvider = newGetProvider (fun _ -> conf) io.getPrompt
   let answerSpinner = builder.GetObject "answer_spinner" :?> Spinner
+
+  let showCommands = newShowCommands builder
+  let hideCommands = newHideCommands builder
 
   io.keyRelease (fun k ->
     let e = k.Event
@@ -65,7 +50,8 @@ let newWindow () =
         getProvider
         { insertWord = insertWord
           stop = answerSpinner.Stop }
-    | Gdk.Key.p when e.State.HasFlag Gdk.ModifierType.ControlMask -> ()
+    | Gdk.Key.p when e.State.HasFlag Gdk.ModifierType.ControlMask -> showCommands ()
+    | Gdk.Key.Escape -> hideCommands ()
     | _ -> ())
 
-  window
+  w

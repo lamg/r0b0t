@@ -5,20 +5,6 @@
   <object class="GtkEntryBuffer" id="chat_buffer">
     <property name="text" translatable="yes">Write your question here</property>
   </object>
-  <object class="GtkListStore" id="command_list">
-    <columns>
-      <!-- column-name commands -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">command0</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">command1</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkAdjustment" id="text_adjustment">
     <property name="upper">100</property>
     <property name="step-increment">1</property>
@@ -45,7 +31,7 @@
               <object class="GtkLabel" id="provider_label">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label" translatable="yes">label</property>
+                <property name="label" translatable="yes">Provider</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -57,7 +43,7 @@
               <object class="GtkLabel" id="model_label">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label" translatable="yes">label</property>
+                <property name="label" translatable="yes">Model</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -114,15 +100,63 @@
               </packing>
             </child>
             <child>
-              <object class="GtkScrolledWindow" id="chat_input_scroll">
+              <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="shadow-type">in</property>
+                <property name="can-focus">False</property>
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkTextView" id="chat_input">
+                  <object class="GtkScrolledWindow" id="chat_input_scroll">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
+                    <property name="shadow-type">in</property>
+                    <child>
+                      <object class="GtkTextView" id="chat_input">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                      </object>
+                    </child>
                   </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="command_box">
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkSearchEntry" id="command_search">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="primary-icon-name">edit-find-symbolic</property>
+                        <property name="primary-icon-activatable">False</property>
+                        <property name="primary-icon-sensitive">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkListBox" id="command_list">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
                 </child>
               </object>
               <packing>
@@ -139,7 +173,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkBox" id="footer_box">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <child>
@@ -163,57 +197,6 @@
           </packing>
         </child>
       </object>
-    </child>
-  </object>
-  <object class="GtkPopoverMenu" id="commands">
-    <property name="can-focus">False</property>
-    <property name="relative-to">selection_box</property>
-    <property name="position">bottom</property>
-    <child>
-      <object class="GtkBox">
-        <property name="visible">True</property>
-        <property name="can-focus">False</property>
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkSearchEntry">
-            <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="primary-icon-name">edit-find-symbolic</property>
-            <property name="primary-icon-activatable">False</property>
-            <property name="primary-icon-sensitive">False</property>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkTreeView" id="command_view">
-            <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="model">command_list</property>
-            <property name="search-column">0</property>
-            <child internal-child="selection">
-              <object class="GtkTreeSelection">
-                <property name="mode">browse</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-      <packing>
-        <property name="submenu">main</property>
-        <property name="position">1</property>
-      </packing>
     </child>
   </object>
 </interface>

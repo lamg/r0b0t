@@ -54,7 +54,44 @@ let insertWord (chatDisplay: TextView, adjustment: Adjustment) (w: string) =
     false)
   |> ignore
 
-let newInputOutput (b: Builder) : InputOutput =
+type ChatWindow(baseBuilder: nativeint) =
+  inherit Window(baseBuilder)
+
+let newWindow (builder: Builder) =
+  let rawWindow = builder.GetRawOwnedObject "ChatWindow"
+
+  let window = new ChatWindow(rawWindow)
+
+  let height = Gdk.Screen.Default.RootWindow.Height
+  let width = Gdk.Screen.Default.RootWindow.Width
+  window.HeightRequest <- height / 2
+  window.WidthRequest <- width / 4
+  window.Title <- "r0b0t"
+
+  builder.Autoconnect window
+  window.DeleteEvent.Add(fun _ -> Application.Quit())
+  window
+
+let newShowCommands (b: Builder) =
+  let commandList = b.GetObject "command_list" :?> ListBox
+  let commandSearch = b.GetObject "command_search" :?> SearchEntry
+  let commandBox = b.GetObject "command_box" :?> Box
+  let l0 = new Label("bla")
+  commandList.Add l0
+  commandList.ShowAll()
+
+  fun () ->
+    commandSearch.GrabFocus()
+    commandBox.Visible <- true
+
+
+let newHideCommands (b: Builder) =
+  let commandBox = b.GetObject "command_box" :?> Box
+
+  fun () -> commandBox.Visible <- false
+
+
+let newInputOutput (w: Window) (b: Builder) : InputOutput =
   let chatDisplay = b.GetObject "chat_display" :?> TextView
   let mutable provider = new CssProvider()
   provider.LoadFromData("textview { font-size: 18pt;}") |> ignore
@@ -69,6 +106,6 @@ let newInputOutput (b: Builder) : InputOutput =
   let insertWord = insertWord (chatDisplay, adjustment)
 
   { getPrompt = getPrompt (chatInput, chatDisplay)
-    keyRelease = chatInput.KeyReleaseEvent.Add
+    keyRelease = w.KeyReleaseEvent.Add
     insertWord = insertWord
     insertImage = insertImage insertWord chatDisplay }
