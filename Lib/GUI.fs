@@ -1,50 +1,8 @@
 module GUI
 
-open System
 open Gtk
 open GetProviderImpl
-
-
-type InputOutput =
-  { getPrompt: unit -> Prompt
-    keyRelease: (KeyReleaseEventArgs -> unit) -> unit
-    insertWord: string -> unit }
-
-let newInputOutput (b: Builder) : InputOutput =
-  let chatDisplay = b.GetObject "chat_display" :?> TextView
-  let mutable provider = new CssProvider()
-  provider.LoadFromData("textview { font-size: 18pt;}") |> ignore
-  chatDisplay.StyleContext.AddProvider(provider, 0u)
-
-  let chatInput = b.GetObject "chat_input" :?> TextView
-  let mutable provider = new CssProvider()
-  provider.LoadFromData("textview { font-size: 18pt;}") |> ignore
-  chatInput.StyleContext.AddProvider(provider, 0u)
-
-  let adjustment = b.GetObject "text_adjustment" :?> Adjustment
-
-  { getPrompt =
-      fun () ->
-        let question = chatInput.Buffer.Text
-
-        chatDisplay.Buffer.PlaceCursor chatDisplay.Buffer.EndIter
-        chatDisplay.Buffer.InsertAtCursor $"🧑: {question}\n🤖: "
-        question
-
-    keyRelease = chatInput.KeyReleaseEvent.Add
-    insertWord =
-      (fun w ->
-        let word =
-          match w with
-          | w when w = String.Empty || isNull w -> "\n\n"
-          | w -> w
-
-        GLib.Idle.Add(fun _ ->
-          chatDisplay.Buffer.PlaceCursor chatDisplay.Buffer.EndIter
-          chatDisplay.Buffer.InsertAtCursor word
-          adjustment.Value <- adjustment.Upper
-          false)
-        |> ignore) }
+open InputOutput
 
 let newConf () =
   let providers =
@@ -80,8 +38,12 @@ let newWindow () =
   builder.Autoconnect window
   window.DeleteEvent.Add(fun _ -> Application.Quit())
 
-
   let mutable conf = newConf ()
+
+  conf <-
+    { conf with
+        active.model = OpenAI.ObjectModels.Models.Dall_e_3 }
+
   displayProviderModel builder conf.active
   let io = newInputOutput builder
   let getProvider = newGetProvider (fun _ -> conf) io.getPrompt
@@ -94,14 +56,16 @@ let newWindow () =
     | Gdk.Key.Return when e.State.HasFlag Gdk.ModifierType.ControlMask ->
       answerSpinner.Start()
 
+      let insertWord =
+        match conf.active.model with
+        | m when m = OpenAI.ObjectModels.Models.Dall_e_3 -> io.insertImage
+        | _ -> io.insertWord
+
       Stream.Main.main
         getProvider
-        { insertWord = io.insertWord
+        { insertWord = insertWord
           stop = answerSpinner.Stop }
-
     | Gdk.Key.p when e.State.HasFlag Gdk.ModifierType.ControlMask -> ()
-    | _ -> ()
-
-  )
+    | _ -> ())
 
   window

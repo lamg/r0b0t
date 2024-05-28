@@ -24,4 +24,4 @@ let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<string option>
 
 let produceStream (g: GetProvider) =
   let mb = MailboxProcessor.Start(fun inbox -> g () |> readSegments inbox)
-  fun () -> mb.PostAndTryAsyncReply(AnswerSegment, timeout = 65000)
+  fun () -> mb.PostAndTryAsyncReply(AnswerSegment, timeout = 65_000)

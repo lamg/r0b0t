@@ -16,6 +16,7 @@
     <Compile Include="ProviderModuleImpl/GitHub.fs" />
     <Compile Include="ProviderModuleImpl/OpenAI.fs" />
 
+    <Compile Include="InputOutput.fs" />
     <Compile Include="GUI.fs" />
 
   </ItemGroup>

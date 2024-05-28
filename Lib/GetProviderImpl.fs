@@ -24,14 +24,17 @@ type Conf =
   { active: Active
     providers: Map<Provider, ProviderImpl> }
 
-let getenv s =
+let getEnv s =
   System.Environment.GetEnvironmentVariable s |> Option.ofObj
 
 let initConf (xs: ProviderModule list) (_default: Provider) =
   let providers =
     xs
-    |> List.choose (fun pm -> getenv pm.keyVar |> Option.map (fun key -> pm.provider, pm.implementation key))
+    |> List.choose (fun pm -> getEnv pm.keyVar |> Option.map (fun key -> pm.provider, pm.implementation key))
     |> Map.ofList
+    |> function
+      | m when m.Count = 0 -> failwith "Required environment variable openai_key not defined"
+      | m -> m
 
   let active =
     { provider = _default
