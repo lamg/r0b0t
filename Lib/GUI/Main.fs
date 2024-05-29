@@ -1,4 +1,4 @@
-module GUI
+module GUI.Main
 
 open Gtk
 open GetProviderImpl
@@ -31,7 +31,7 @@ let newWindow () =
   let getProvider = newGetProvider (fun _ -> conf) io.getPrompt
   let answerSpinner = builder.GetObject "answer_spinner" :?> Spinner
 
-  let showCommands = newShowCommands builder
+  let showCommands = newShowCommands conf builder
   let hideCommands = newHideCommands builder
 
   io.keyRelease (fun k ->

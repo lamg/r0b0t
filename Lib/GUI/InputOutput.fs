@@ -1,4 +1,4 @@
-module InputOutput
+module GUI.InputOutput
 
 open System
 open Gdk
@@ -72,13 +72,48 @@ let newWindow (builder: Builder) =
   window.DeleteEvent.Add(fun _ -> Application.Quit())
   window
 
-let newShowCommands (b: Builder) =
+let newShowCommands (conf: Conf) (b: Builder) =
   let commandList = b.GetObject "command_list" :?> ListBox
   let commandSearch = b.GetObject "command_search" :?> SearchEntry
   let commandBox = b.GetObject "command_box" :?> Box
-  let l0 = new Label("bla")
-  commandList.Add l0
+
+  let providersRow = new Box(Orientation.Horizontal, 2)
+  providersRow.PackStart(new Label("Providers"), false, true, 5u)
+  let providers = new ComboBoxText()
+  conf.providers.Keys |> Seq.iter providers.AppendText
+  providersRow.PackStart(providers, true, true, 0u)
+  commandList.Add providersRow
+
+  let modelsRow = new Box(Orientation.Horizontal, 2)
+  modelsRow.PackStart(new Label("Models"), false, true, 5u)
+  let models = new ComboBoxText()
+  conf.providers[conf.active.provider].models |> Seq.iter models.AppendText
+  modelsRow.PackStart(models, true, true, 0u)
+  commandList.Add modelsRow
+  models.Active <- 0
+
+  commandBox.Expand <- true
   commandList.ShowAll()
+
+  let providerLabel = b.GetObject "provider_label" :?> Label
+  let modelLabel = b.GetObject "model_label" :?> Label
+
+  providers.Changed.Add(fun _ ->
+    conf.active <-
+      { provider = providers.ActiveText
+        model = conf.providers[providers.ActiveText].models.Head }
+
+    models.Clear()
+    conf.providers[conf.active.provider].models |> Seq.iter models.AppendText
+    providerLabel.Text <- conf.active.provider
+    modelLabel.Text <- conf.active.model)
+
+  models.Changed.Add(fun _ ->
+    conf.active <-
+      { conf.active with
+          model = models.ActiveText }
+
+    modelLabel.Text <- conf.active.model)
 
   fun () ->
     commandSearch.GrabFocus()
@@ -87,8 +122,11 @@ let newShowCommands (b: Builder) =
 
 let newHideCommands (b: Builder) =
   let commandBox = b.GetObject "command_box" :?> Box
+  let chatInput = b.GetObject "chat_input" :?> TextView
 
-  fun () -> commandBox.Visible <- false
+  fun () ->
+    chatInput.GrabFocus()
+    commandBox.Visible <- false
 
 
 let newInputOutput (w: Window) (b: Builder) : InputOutput =
@@ -101,6 +139,7 @@ let newInputOutput (w: Window) (b: Builder) : InputOutput =
   let mutable provider = new CssProvider()
   provider.LoadFromData("textview { font-size: 18pt;}") |> ignore
   chatInput.StyleContext.AddProvider(provider, 0u)
+  chatInput.GrabFocus()
 
   let adjustment = b.GetObject "text_adjustment" :?> Adjustment
   let insertWord = insertWord (chatDisplay, adjustment)

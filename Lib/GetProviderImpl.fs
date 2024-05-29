@@ -21,8 +21,8 @@ type ProviderModule =
 type Active = { provider: Provider; model: Model }
 
 type Conf =
-  { active: Active
-    providers: Map<Provider, ProviderImpl> }
+  { mutable active: Active
+    mutable providers: Map<Provider, ProviderImpl> }
 
 let getEnv s =
   System.Environment.GetEnvironmentVariable s |> Option.ofObj
