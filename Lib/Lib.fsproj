@@ -17,6 +17,7 @@
     <Compile Include="ProviderModuleImpl/OpenAI.fs" />
 
     <Compile Include="GUI\InputOutput.fs" />
+    <Compile Include="GUI\Settings.fs" />
     <Compile Include="GUI\Main.fs" />
 
   </ItemGroup>

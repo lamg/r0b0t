@@ -7,7 +7,7 @@ let main _ =
   let app = new Application("r0b0t.lamg.github.com", GLib.ApplicationFlags.None)
   app.Register(GLib.Cancellable.Current) |> ignore
 
-  let w = GUI.Main.newWindow ()
+  let w = GUI.Main.newAppWindow ()
 
   app.AddWindow w
   w.Show()

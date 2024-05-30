@@ -1,11 +1,28 @@
 module GUI.Main
 
 open Gtk
+
 open GetProviderImpl
-open InputOutput
 open Stream.Types
 
-let newWindow () =
+open InputOutput
+open Settings
+
+type ChatWindow(baseBuilder: nativeint) =
+  inherit Window(baseBuilder)
+
+let newWindow (builder: Builder) =
+  let rawWindow = builder.GetRawOwnedObject "ChatWindow"
+
+  let window = new ChatWindow(rawWindow)
+  window.Maximize()
+  window.Title <- "r0b0t"
+
+  builder.Autoconnect window
+  window.DeleteEvent.Add(fun _ -> Application.Quit())
+  window
+
+let newAppWindow () =
   let builder = new Builder("GUI.glade")
   let w = newWindow builder
   let confHandler = newConfHandler ()
