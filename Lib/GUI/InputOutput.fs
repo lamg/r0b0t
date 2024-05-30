@@ -61,11 +61,7 @@ let newWindow (builder: Builder) =
   let rawWindow = builder.GetRawOwnedObject "ChatWindow"
 
   let window = new ChatWindow(rawWindow)
-
-  let height = Gdk.Screen.Default.RootWindow.Height
-  let width = Gdk.Screen.Default.RootWindow.Width
-  window.HeightRequest <- height / 2
-  window.WidthRequest <- width / 4
+  window.Maximize()
   window.Title <- "r0b0t"
 
   builder.Autoconnect window
