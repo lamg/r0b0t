@@ -8,6 +8,7 @@ open System.Threading.Channels
 
 open FsHttp
 open FSharp.Control
+open Stream.Types
 
 type GithubAuth = { oauthToken: string; token: string }
 
@@ -91,7 +92,7 @@ let asyncBody (r: Response) =
       | [| _; "[DONE]" |] -> ()
       | [| _; x |] ->
         match (JsonSerializer.Deserialize<CompletionChunk> x).choices with
-        | [ { delta = { content = Some x } } ] -> yield Some x
+        | [ { delta = { content = Some x } } ] -> yield Some(Word x)
         | _ -> ()
       | _ -> ()
 
@@ -142,7 +143,7 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
       | Ok r when r.statusCode = HttpStatusCode.OK -> { auth with token = token }, asyncBody r
       | Ok r when r.statusCode = HttpStatusCode.Unauthorized && retries = retriesLimit ->
         auth,
-        [ Some $"{retriesLimit} Github authentication attemps failed, stopping now"
+        [ Some(Word $"{retriesLimit} Github authentication attemps failed, stopping now")
           None ]
         |> AsyncSeq.ofSeq
       | Ok r when
@@ -152,7 +153,7 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
         //printfn $"body {r.content.ReadAsStringAsync().Result}"
         match getAuthorizationFromKey auth.oauthToken with
         | Ok r -> retryLoop r.token (retries + 1)
-        | Error e -> auth, [ e.ToString() |> Some; None ] |> AsyncSeq.ofSeq
+        | Error e -> auth, [ e.ToString() |> Word |> Some; None ] |> AsyncSeq.ofSeq
       | Ok r ->
         auth,
         asyncSeq {
@@ -160,15 +161,15 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
 
           while not reader.EndOfStream do
             let! line = reader.ReadLineAsync() |> Async.AwaitTask
-            yield (Some line)
+            yield (Some(Word line))
 
           yield None
         }
-      | Error e -> auth, [ e.ToString() |> Some; None ] |> AsyncSeq.ofSeq
+      | Error e -> auth, [ e.ToString() |> Word |> Some; None ] |> AsyncSeq.ofSeq
 
   retryLoop auth.token 0
 
-let answer (auth: GithubAuth) (question: string, consumer: Channel<string option>) =
+let answer (auth: GithubAuth) (question: string, consumer: Channel<LlmData option>) =
   let token, xs = chatCompletion auth question
 
   token,
@@ -207,4 +208,5 @@ let providerModule: GetProviderImpl.ProviderModule =
     implementation =
       fun key ->
         { answerer = ask key
-          models = [ "Copilot" ] } }
+          models = [ "Copilot" ]
+          _default = "Copilot" } }

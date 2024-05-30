@@ -9,6 +9,7 @@ open OpenAI.ObjectModels.ResponseModels
 open FSharp.Control
 
 open GetProviderImpl
+open Stream.Types
 
 let toAsyncSeqString resp =
   resp
@@ -16,7 +17,7 @@ let toAsyncSeqString resp =
   |> AsyncSeq.map (fun (x: ChatCompletionCreateResponse) ->
 
     if x.Successful then
-      x.Choices |> Seq.head |> _.Message.Content |> Some
+      x.Choices |> Seq.head |> _.Message.Content |> Word |> Some
     else
       None)
   |> fun xs ->
@@ -27,7 +28,7 @@ let imagineFake (key: Key) (description: Prompt) =
   let bs =
     System.IO.File.ReadAllBytes "logo_small.png" |> System.Convert.ToBase64String
 
-  [ Some bs; None ] |> AsyncSeq.ofSeq
+  [ Some(PngBase64 bs); None ] |> AsyncSeq.ofSeq
 
 let imagine (key: Key) (description: Prompt) =
   let client = new OpenAIService(OpenAiOptions(ApiKey = key))
@@ -49,9 +50,9 @@ let imagine (key: Key) (description: Prompt) =
 
     let imgs =
       if resp.Successful then
-        resp.Results |> Seq.map (_.B64 >> Some)
+        resp.Results |> Seq.map (_.B64 >> PngBase64 >> Some)
       else
-        []
+        resp.Error.Messages |> Seq.map (Word >> Some)
 
     return Seq.append imgs [ None ]
   }
@@ -88,4 +89,5 @@ let providerModule: ProviderModule =
               Models.Gpt_4
               Models.Gpt_3_5_Turbo_16k
               Models.Gpt_4_turbo
-              Models.Dall_e_3 ] } }
+              Models.Dall_e_3 ]
+          _default = Models.Gpt_4o } }

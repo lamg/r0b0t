@@ -2,10 +2,18 @@ module Stream.Types
 
 open FSharp.Control
 
-type GetProvider = unit -> AsyncSeq<string option>
+type LlmData =
+  | Word of string
+  | PngBase64 of string
+
+type GetProvider = unit -> AsyncSeq<LlmData option>
+
+type StopReason =
+  | Timeout
+  | Done
 
 type StopInsert =
-  { insertWord: string -> unit
-    stop: unit -> unit }
+  { insertData: LlmData -> unit
+    stop: StopReason -> unit }
 
-type Stream = unit -> Async<string option option>
+type Stream = unit -> Async<LlmData option option>

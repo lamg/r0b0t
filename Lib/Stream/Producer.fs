@@ -1,12 +1,13 @@
 module Stream.Producer
 
+open Stream.Types
 open Types
 open FSharp.Control
 
-type Message = AnswerSegment of AsyncReplyChannel<string option>
+type Message = AnswerSegment of AsyncReplyChannel<LlmData option>
 type Provider = MailboxProcessor<Message> -> Async<unit>
 
-let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<string option>) =
+let readSegments (inbox: MailboxProcessor<Message>) (xs: AsyncSeq<LlmData option>) =
   xs
   |> AsyncSeq.takeWhileAsync (fun x ->
     async {

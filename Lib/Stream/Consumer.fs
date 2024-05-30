@@ -9,14 +9,14 @@ let consumeStream (si: StopInsert) (read: Stream) =
 
       match r with
       | Some(Some w) ->
-        si.insertWord w
+        si.insertData w
         return! loop ()
       | Some None ->
         // sequence fully consumed
-        si.stop ()
+        si.stop Done
       | None ->
         // timeout
-        si.stop ()
+        si.stop Timeout
     }
 
   loop () |> Async.Start

@@ -12,6 +12,24 @@ type InputOutput =
     insertWord: string -> unit
     insertImage: string -> unit }
 
+let newConf () =
+  let providers =
+    [ ProviderModuleImpl.OpenAI.providerModule
+      ProviderModuleImpl.GitHub.providerModule ]
+
+  let _default = ProviderModuleImpl.OpenAI.providerModule.provider
+  initConf providers _default
+
+type ConfHandler =
+  { setConf: Conf -> unit
+    getConf: unit -> Conf }
+
+let newConfHandler () =
+  let mutable conf = newConf ()
+  let setConf (c: Conf) = conf <- c
+  let getConf () = conf
+  { setConf = setConf; getConf = getConf }
+
 let saveImage (bs: byte array) =
   let now = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH-mm-ss")
   IO.File.WriteAllBytes($"img_{now}.png", bs)
@@ -68,48 +86,86 @@ let newWindow (builder: Builder) =
   window.DeleteEvent.Add(fun _ -> Application.Quit())
   window
 
-let newShowCommands (conf: Conf) (b: Builder) =
+let displayProviderModel (b: Builder) (a: Active) =
+  let providerL = b.GetObject "provider_label" :?> Label
+  let modelL = b.GetObject "model_label" :?> Label
+
+  providerL.Text <- a.provider
+  modelL.Text <- a.model
+
+let inspectCombo (combo: ComboBoxText) =
+  let listStore = combo.Model :?> ListStore
+  let mutable iter = TreeIter()
+  let mutable isValid = listStore.GetIterFirst(&iter) // Get the first item
+  // Iterate through all items
+  while isValid do
+    let value = listStore.GetValue(iter, 0) :?> string
+    printfn $"Item: {value}"
+    isValid <- listStore.IterNext(&iter)
+
+let settingBox (name: string) (active: string) (values: string seq) (changed: string -> unit) =
+  let box = new Box(Orientation.Horizontal, 2)
+  let label = new Label(name)
+  label.CanFocus <- false
+  box.PackStart(label, false, true, 5u)
+  let combo = new ComboBoxText()
+  values |> Seq.iter combo.AppendText
+  let eq x y = x = y
+  combo.Active <- values |> Seq.findIndex (eq active)
+  box.PackStart(combo, true, true, 0u)
+  combo.Changed.Add(fun _ -> changed combo.ActiveText)
+
+  box,
+  (fun (active: string) (items: string list) ->
+    combo.RemoveAll()
+    items |> Seq.iter combo.AppendText
+    let activeIndex = items |> Seq.findIndex (eq active)
+    combo.Active <- activeIndex)
+
+let changedModel (modelLabel: Label) ch active =
+  let conf = ch.getConf ()
+
+  if validModelState conf active then
+    setActiveModel conf active |> ch.setConf
+    modelLabel.Text <- active
+
+let changedProvider (providerLabel: Label) (modelLabel: Label) ch updateModels active =
+  let conf = ch.getConf ()
+
+  if validProviderState conf active then
+    setActiveProvider conf active |> ch.setConf
+    let conf = ch.getConf ()
+    updateModels conf.active.model conf.providers[conf.active.provider].models
+    providerLabel.Text <- conf.active.provider
+    modelLabel.Text <- conf.active.model
+
+
+let newShowCommands (ch: ConfHandler) (b: Builder) =
   let commandList = b.GetObject "command_list" :?> ListBox
   let commandSearch = b.GetObject "command_search" :?> SearchEntry
   let commandBox = b.GetObject "command_box" :?> Box
-
-  let providersRow = new Box(Orientation.Horizontal, 2)
-  providersRow.PackStart(new Label("Providers"), false, true, 5u)
-  let providers = new ComboBoxText()
-  conf.providers.Keys |> Seq.iter providers.AppendText
-  providersRow.PackStart(providers, true, true, 0u)
-  commandList.Add providersRow
-
-  let modelsRow = new Box(Orientation.Horizontal, 2)
-  modelsRow.PackStart(new Label("Models"), false, true, 5u)
-  let models = new ComboBoxText()
-  conf.providers[conf.active.provider].models |> Seq.iter models.AppendText
-  modelsRow.PackStart(models, true, true, 0u)
-  commandList.Add modelsRow
-  models.Active <- 0
-
-  commandBox.Expand <- true
-  commandList.ShowAll()
-
   let providerLabel = b.GetObject "provider_label" :?> Label
   let modelLabel = b.GetObject "model_label" :?> Label
 
-  providers.Changed.Add(fun _ ->
-    conf.active <-
-      { provider = providers.ActiveText
-        model = conf.providers[providers.ActiveText].models.Head }
+  let conf = ch.getConf ()
 
-    models.Clear()
-    conf.providers[conf.active.provider].models |> Seq.iter models.AppendText
-    providerLabel.Text <- conf.active.provider
-    modelLabel.Text <- conf.active.model)
+  let modelSetting, updateModels =
+    settingBox "Models" conf.active.model conf.providers[conf.active.provider].models (changedModel modelLabel ch)
 
-  models.Changed.Add(fun _ ->
-    conf.active <-
-      { conf.active with
-          model = models.ActiveText }
+  let providerSetting, _ =
+    let conf = ch.getConf ()
 
-    modelLabel.Text <- conf.active.model)
+    settingBox
+      "Providers"
+      conf.active.provider
+      conf.providers.Keys
+      (changedProvider providerLabel modelLabel ch updateModels)
+
+  commandList.Add modelSetting
+  commandList.Add providerSetting
+
+  commandBox.Expand <- true
+  commandList.ShowAll()
 
   fun () ->
     commandSearch.GrabFocus()
