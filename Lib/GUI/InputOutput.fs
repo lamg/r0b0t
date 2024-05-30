@@ -60,14 +60,9 @@ let getPrompt (chatInput: TextView, chatDisplay: TextView) =
     question
 
 let insertWord (chatDisplay: TextView, adjustment: Adjustment) (w: string) =
-  let word =
-    match w with
-    | w when w = String.Empty || isNull w -> "\n\n"
-    | w -> w
-
   GLib.Idle.Add(fun _ ->
     chatDisplay.Buffer.PlaceCursor chatDisplay.Buffer.EndIter
-    chatDisplay.Buffer.InsertAtCursor word
+    chatDisplay.Buffer.InsertAtCursor w
     adjustment.Value <- adjustment.Upper
     false)
   |> ignore
