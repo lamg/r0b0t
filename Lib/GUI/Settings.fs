@@ -6,7 +6,8 @@ open GetProviderImpl
 let newConf () =
   let providers =
     [ ProviderModuleImpl.OpenAI.providerModule
-      ProviderModuleImpl.GitHub.providerModule ]
+      ProviderModuleImpl.GitHub.providerModule
+      ProviderModuleImpl.Anthropic.providerModule ]
 
   let _default = ProviderModuleImpl.OpenAI.providerModule.provider
   initConf providers _default

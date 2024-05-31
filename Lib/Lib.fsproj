@@ -15,6 +15,7 @@
 
     <Compile Include="ProviderModuleImpl/GitHub.fs" />
     <Compile Include="ProviderModuleImpl/OpenAI.fs" />
+    <Compile Include="ProviderModuleImpl/Anthropic.fs" />
 
     <Compile Include="GUI\InputOutput.fs" />
     <Compile Include="GUI\Settings.fs" />
@@ -35,6 +36,8 @@
     <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
     <PackageReference Include="FsHttp" Version="14.5.0" />
     <PackageReference Include="GtkSharp" Version="3.24.24.95" />
+    <PackageReference Include="LangChain" Version="0.14.1-dev.47" />
+    <PackageReference Include="LangChain.Providers.Anthropic" Version="0.14.1-dev.47" />
   </ItemGroup>
 
 </Project>
