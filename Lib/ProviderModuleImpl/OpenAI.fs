@@ -50,7 +50,7 @@ let imagine (key: Key) (description: Prompt) =
 
     let imgs =
       if resp.Successful then
-        resp.Results |> Seq.map (_.B64 >> PngBase64 >> Some)
+        resp.Results |> Seq.map (fun x -> [x.B64 |> PngBase64 |> Some;x.RevisedPrompt |> Word |> Some]) |> Seq.concat
       else
         resp.Error.Messages |> Seq.map (Word >> Some)
 
