@@ -30,7 +30,7 @@ let insertImage (insertWord: string -> unit) (chatDisplay: TextView) (content: s
     false)
   |> ignore
 
-  insertWord ""
+  insertWord "\n\n"
 
 
 let getPrompt (chatInput: TextView, chatDisplay: TextView) =
