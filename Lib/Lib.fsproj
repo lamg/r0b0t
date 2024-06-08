@@ -38,6 +38,7 @@
     <PackageReference Include="GtkSharp" Version="3.24.24.95" />
     <PackageReference Include="LangChain" Version="0.14.1-dev.47" />
     <PackageReference Include="LangChain.Providers.Anthropic" Version="0.14.1-dev.47" />
+    <PackageReference Include="OpenAI" Version="2.0.0-beta.3" />
   </ItemGroup>
 
 </Project>
