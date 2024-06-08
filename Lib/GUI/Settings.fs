@@ -10,7 +10,9 @@ let newConf () =
       ProviderModuleImpl.Anthropic.providerModule ]
 
   let _default = ProviderModuleImpl.OpenAI.providerModule.provider
+
   initConf providers _default
+
 
 type ConfHandler =
   { setConf: Conf -> unit
@@ -21,7 +23,7 @@ let newConfHandler () =
   let setConf (c: Conf) = conf <- c
   let getConf () = conf
   { setConf = setConf; getConf = getConf }
-  
+
 let inspectCombo (combo: ComboBoxText) =
   let listStore = combo.Model :?> ListStore
   let mutable iter = TreeIter()
