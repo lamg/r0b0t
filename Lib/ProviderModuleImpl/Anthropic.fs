@@ -11,13 +11,29 @@ open Stream.Types
 let appendNone (xs: AsyncSeq<'a option>) =
   AsyncSeq.append xs (AsyncSeq.ofSeq [ None ])
 
+let haiku3 =
+  GetProviderImpl.Model Anthropic.SDK.Constants.AnthropicModels.Claude3Haiku
+
+let sonnet3 =
+  GetProviderImpl.Model Anthropic.SDK.Constants.AnthropicModels.Claude3Sonnet
+
+let opus3 =
+  GetProviderImpl.Model Anthropic.SDK.Constants.AnthropicModels.Claude3Opus
+
 let ask (key: Key) (m: GetProviderImpl.Model) (question: Prompt) =
   let conf = AnthropicConfiguration(ApiKey = key)
 
   let client = AnthropicProvider.FromConfiguration conf
-  let prov = Claude3Haiku client
 
-  [ prov.GenerateAsync(question).Result.LastMessageContent |> Word |> Some; None ]
+  let prov =
+    match m with
+    | _ when m = haiku3 -> Claude3Haiku client |> _.GenerateAsync
+    | _ when m = sonnet3 -> Claude3Sonnet client |> _.GenerateAsync
+    | _ when m = opus3 -> Claude3Opus client |> _.GenerateAsync
+    | _ -> failwith $"unknown model {m}"
+
+  [ prov(ChatRequest.op_Implicit question).Result.LastMessageContent |> Word |> Some
+    None ]
   |> AsyncSeq.ofSeq
 
 // let msg = MessageParameters()
@@ -36,14 +52,11 @@ let ask (key: Key) (m: GetProviderImpl.Model) (question: Prompt) =
 // |> appendNone
 //
 
-let haiku =
-  GetProviderImpl.Model Anthropic.SDK.Constants.AnthropicModels.Claude3Haiku
-
 let providerModule: ProviderModule =
   { provider = "Anthropic"
     keyVar = "anthropic_key"
     implementation =
       fun key ->
         { answerer = ask key
-          models = [ haiku ]
-          _default = haiku } }
+          models = [ haiku3; sonnet3; opus3 ]
+          _default = haiku3 } }
