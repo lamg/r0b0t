@@ -1,0 +1,24 @@
+name: Publish NuGet Package
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:8.0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: publish LamgEnv
+        run: |
+          dotnet restore
+          dotnet publish -c Release
+          dotnet pack
+          dotnet nuget push nupkg/*.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
+        working-directory: ./Lib
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

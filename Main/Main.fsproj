@@ -8,6 +8,18 @@
     <ToolCommandName>r0b0t</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <Version>0.0.0</Version>
+    <Authors>Luis Ángel Méndez Gort</Authors>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <AssemblyName>r0b0t</AssemblyName>
+    <RootNamespace>r0b0t</RootNamespace>
+    <Title>Chat with LLMs</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>GTK application to interact with Large Language Models</Description>
+    <PackageProjectUrl>https://github.com/lamg/r0b0t</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/lamg/r0b0t</RepositoryUrl>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,4 +30,8 @@
     <ProjectReference Include="..\Lib\Lib.fsproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\docs\logo.png" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 </Project>
