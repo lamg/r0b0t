@@ -7,7 +7,8 @@ let newConf () =
   let providers =
     [ ProviderModuleImpl.OpenAI.providerModule
       ProviderModuleImpl.GitHub.providerModule
-      ProviderModuleImpl.Anthropic.providerModule ]
+      ProviderModuleImpl.Anthropic.providerModule
+      ProviderModuleImpl.HuggingFace.providerModule ]
 
   let _default = ProviderModuleImpl.OpenAI.providerModule.provider
 

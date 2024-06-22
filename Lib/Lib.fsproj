@@ -16,6 +16,7 @@
     <Compile Include="ProviderModuleImpl/GitHub.fs" />
     <Compile Include="ProviderModuleImpl/OpenAI.fs" />
     <Compile Include="ProviderModuleImpl/Anthropic.fs" />
+    <Compile Include="ProviderModuleImpl/HuggingFace.fs" />
 
     <Compile Include="GUI\InputOutput.fs" />
     <Compile Include="GUI\Settings.fs" />

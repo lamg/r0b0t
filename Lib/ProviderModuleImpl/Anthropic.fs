@@ -1,6 +1,5 @@
 module ProviderModuleImpl.Anthropic
 
-open Anthropic.SDK.Messaging
 open FSharp.Control
 open GetProviderImpl
 open LangChain.Providers
