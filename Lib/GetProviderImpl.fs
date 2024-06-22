@@ -24,10 +24,33 @@ type Active = { provider: Provider; model: Model }
 
 type Conf =
   { active: Active
+    path: string option
     providers: Map<Provider, ProviderImpl> }
 
 let getEnv s =
   System.Environment.GetEnvironmentVariable s |> Option.ofObj
+
+let saveActive (confPath: string, a: Active) =
+  System.IO.File.WriteAllText(confPath, System.Text.Json.JsonSerializer.Serialize a)
+
+let loadActive (_default: Active) =
+  let deserializeActive (json: string) : Active =
+    System.Text.Json.JsonSerializer.Deserialize<Active>(json)
+
+  match getEnv "HOME" with
+  | Some home ->
+    let confPath =
+      home :: [ ".config"; "r0b0t.json" ] |> List.toArray |> System.IO.Path.Join
+
+    let active =
+      if System.IO.File.Exists confPath then
+        System.IO.File.ReadAllText confPath |> deserializeActive
+      else
+        saveActive (confPath, _default)
+        _default
+
+    Some confPath, active
+  | None -> None, _default
 
 let initConf (xs: ProviderModule list) (_default: Provider) =
   let providers =
@@ -38,11 +61,13 @@ let initConf (xs: ProviderModule list) (_default: Provider) =
       | m when m.Count = 0 -> failwith "Required environment variable openai_key not defined"
       | m -> m
 
-  let active =
+  let confPath, active =
     { provider = _default
       model = providers[_default]._default }
+    |> loadActive
 
   { active = active
+    path = confPath
     providers = providers }
 
 let newGetProvider (c: Conf) (getPrompt: unit -> Prompt) : GetProvider =
@@ -62,12 +87,18 @@ let setActiveProvider (conf: Conf) (p: Provider) =
       { provider = p
         model = conf.providers[p]._default }
 
+    conf.path |> Option.iter (fun path -> saveActive (path, conf.active))
     { conf with active = active }
   else
     failwith $"Provider '{p}' not found"
 
+let idIter (f: 'a -> unit) (x: 'a) =
+  f x
+  x
+
 let setActiveModel (conf: Conf) (m: Model) =
   if validModelState conf m then
     { conf with active.model = m }
+    |> idIter (fun c -> c.path |> Option.iter (fun path -> saveActive (path, c.active)))
   else
     failwith $"unknown model '{m}' for provider '{conf.active.provider}'"
