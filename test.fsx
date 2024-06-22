@@ -3,6 +3,7 @@
 #r "nuget: Betalgo.OpenAI, 8.2.2"
 #r "nuget: LangChain.Providers.Anthropic"
 #r "nuget: LangChain"
+#r "nuget: LamgEnv, 0.0.2"
 
 open FSharp.Control
 open System
@@ -15,7 +16,7 @@ open LangChain.Providers.Anthropic
 open Stream.Types
 
 
-let key = GetProviderImpl.getEnv "anthropic_key" |> Option.defaultValue ""
+let key = LamgEnv.getEnv "anthropic_key" |> Option.defaultValue ""
 
 let appendNone (xs: AsyncSeq<'a option>) =
   AsyncSeq.append xs (AsyncSeq.ofSeq [ None ])

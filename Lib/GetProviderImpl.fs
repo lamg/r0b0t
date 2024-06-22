@@ -2,6 +2,7 @@ module GetProviderImpl
 
 open FSharp.Control
 open Stream.Types
+open LamgEnv
 
 type Model = string
 type Prompt = string
@@ -26,9 +27,6 @@ type Conf =
   { active: Active
     path: string option
     providers: Map<Provider, ProviderImpl> }
-
-let getEnv s =
-  System.Environment.GetEnvironmentVariable s |> Option.ofObj
 
 let saveActive (confPath: string, a: Active) =
   System.IO.File.WriteAllText(confPath, System.Text.Json.JsonSerializer.Serialize a)
