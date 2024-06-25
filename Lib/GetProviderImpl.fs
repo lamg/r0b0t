@@ -31,9 +31,21 @@ type Conf =
 let saveActive (confPath: string, a: Active) =
   System.IO.File.WriteAllText(confPath, System.Text.Json.JsonSerializer.Serialize a)
 
-let loadActive (_default: Active) =
+let loadActive (providers: Map<Provider, ProviderImpl>) (_default: Provider) =
+  let defaultActive =
+    { provider = _default
+      model = providers[_default]._default }
+
   let deserializeActive (json: string) : Active =
-    System.Text.Json.JsonSerializer.Deserialize<Active>(json)
+    let a = System.Text.Json.JsonSerializer.Deserialize<Active>(json)
+
+    if providers.Keys.Contains a.provider then
+      if providers[a.provider].models |> Seq.contains a.model then
+        a
+      else
+        defaultActive
+    else
+      defaultActive
 
   match getEnv "HOME" with
   | Some home ->
@@ -44,11 +56,11 @@ let loadActive (_default: Active) =
       if System.IO.File.Exists confPath then
         System.IO.File.ReadAllText confPath |> deserializeActive
       else
-        saveActive (confPath, _default)
-        _default
+        saveActive (confPath, defaultActive)
+        defaultActive
 
     Some confPath, active
-  | None -> None, _default
+  | None -> None, defaultActive
 
 let initConf (xs: ProviderModule list) (_default: Provider) =
   let providers =
@@ -59,10 +71,7 @@ let initConf (xs: ProviderModule list) (_default: Provider) =
       | m when m.Count = 0 -> failwith "Required environment variable openai_key not defined"
       | m -> m
 
-  let confPath, active =
-    { provider = _default
-      model = providers[_default]._default }
-    |> loadActive
+  let confPath, active = loadActive providers _default
 
   { active = active
     path = confPath
