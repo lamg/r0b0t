@@ -16,7 +16,7 @@ r0b0t is a GTK+ application for interacting with Large Language Models from Open
 ## Installation
 
 - On Ubuntu requires `apt install appmenu-gtk3-module`
-- create a `.env` file with variables `openai_key`, `github_key` and `anthropic_key`, in the same directory where the program runs; or make sure at least one of them is defined when doing so.
+- create a `.env` file with variables `openai_key`, `github_key`, `huggingface_key` and `anthropic_key`, in the same directory where the program runs; or make sure at least one of them is defined when doing so.
 
 ![screenshot](./docs/screenshot.png)
 
