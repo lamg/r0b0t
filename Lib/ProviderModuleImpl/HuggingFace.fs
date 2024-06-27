@@ -32,7 +32,7 @@ let eventToMsg (line: EventLine) =
 
 let ask (key: Key) (m: GetProviderImpl.Model) (question: Prompt) =
   http {
-    POST "https://api-inference.huggingface.co/models/microsoft/phi-2"
+    POST $"https://api-inference.huggingface.co/models/{m}"
     AuthorizationBearer key
 
     body
