@@ -1,55 +1,72 @@
 module ProviderModuleImpl.Anthropic
 
 open FSharp.Control
+open FsHttp
 open GetProviderImpl
-open LangChain.Providers
-open LangChain.Providers.Anthropic
-open LangChain.Providers.Anthropic.Predefined
+open ServerSentEvents
 open Stream.Types
+
+let claude21 = "claude-2.1"
+let claude2 = "claude-2.0"
+let claudeInstant12 = "claude-instant-1.2"
+let haiku3 = GetProviderImpl.Model "claude-3-haiku-20240307"
+let opus3 = GetProviderImpl.Model "claude-3-opus-20240229"
+let sonnet3 = GetProviderImpl.Model "claude-3-sonnet-20240229"
+let sonnet35 = GetProviderImpl.Model "claude-3-5-sonnet-20240620"
+
+type Delta =
+  { ``type``: string option
+    text: string option }
+
+type Message =
+  { ``type``: string
+    message: obj option
+    content_block: obj option
+    delta: Delta option
+    index: int option }
+
+let deserializeActive (json: string) =
+  try
+    System.Text.Json.JsonSerializer.Deserialize<Message> json |> Some
+  with _ ->
+    None
+
+
+let eventToMsg (line: EventLine) =
+  match line with
+  | Data d ->
+    match deserializeActive d with
+    | Some { ``type`` = "message_start" } -> None
+    | Some { ``type`` = "ping" } -> None
+    | Some { ``type`` = "content_block_delta"
+             delta = Some { text = Some t } } -> Some(Word t)
+    | _ -> None
+  | _ -> None
 
 let appendNone (xs: AsyncSeq<'a option>) =
   AsyncSeq.append xs (AsyncSeq.ofSeq [ None ])
 
-let haiku3 =
-  GetProviderImpl.Model Anthropic.SDK.Constants.AnthropicModels.Claude3Haiku
+let procEventLines (xs: AsyncSeq<EventLine>) =
+  xs |> AsyncSeq.choose eventToMsg |> AsyncSeq.map Some |> appendNone
 
-let sonnet3 =
-  GetProviderImpl.Model Anthropic.SDK.Constants.AnthropicModels.Claude3Sonnet
-
-let opus3 =
-  GetProviderImpl.Model Anthropic.SDK.Constants.AnthropicModels.Claude3Opus
 
 let ask (key: Key) (m: GetProviderImpl.Model) (question: Prompt) =
-  let conf = AnthropicConfiguration(ApiKey = key)
+  http {
+    POST "https://api.anthropic.com/v1/messages"
+    header "x-api-key" key
+    header "anthropic-version" "2023-06-01"
+    body
 
-  let client = AnthropicProvider.FromConfiguration conf
-
-  let prov =
-    match m with
-    | _ when m = haiku3 -> Claude3Haiku client |> _.GenerateAsync
-    | _ when m = sonnet3 -> Claude3Sonnet client |> _.GenerateAsync
-    | _ when m = opus3 -> Claude3Opus client |> _.GenerateAsync
-    | _ -> failwith $"unknown model {m}"
-
-  [ prov(ChatRequest.op_Implicit question).Result.LastMessageContent |> Word |> Some
-    None ]
-  |> AsyncSeq.ofSeq
-
-// let msg = MessageParameters()
-// msg.Stream<-false
-// Anthropic.SDK.Messaging.Message(RoleType.User, question)
-// |> msg.Messages.Add
-//
-// let r = client.Api.Messages.GetClaudeMessageAsync(msg)
-// [r.Result.FirstMessage.Text |> Word |> Some; None]
-// |> AsyncSeq.ofSeq
-// let h = LangChain.Providers.Anthropic.Predefined.Claude3Haiku client
-// h.GenerateAsync("bla").Result.Messages.
-// client.Api.Messages.StreamClaudeMessageAsync(msg)
-// |> AsyncSeq.ofAsyncEnum
-// |> AsyncSeq.map (_.FirstMessage.Text >> Word >> Some)
-// |> appendNone
-//
+    jsonSerialize
+      {| model = m
+         max_tokens = 1024
+         stream = true
+         messages = [ {| role = "user"; content = question |} ] |}
+  }
+  |> Request.send
+  |> Response.toStream
+  |> readEvents
+  |> procEventLines
 
 let providerModule: ProviderModule =
   { provider = "Anthropic"
@@ -57,5 +74,5 @@ let providerModule: ProviderModule =
     implementation =
       fun key ->
         { answerer = ask key
-          models = [ haiku3; sonnet3; opus3 ]
+          models = [ haiku3; sonnet3; opus3; sonnet35 ]
           _default = haiku3 } }

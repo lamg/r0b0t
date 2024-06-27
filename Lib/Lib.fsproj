@@ -13,6 +13,7 @@
 
     <Compile Include="GetProviderImpl.fs" />
 
+    <Compile Include="ProviderModuleImpl/ServerSentEvents.fs" />
     <Compile Include="ProviderModuleImpl/GitHub.fs" />
     <Compile Include="ProviderModuleImpl/OpenAI.fs" />
     <Compile Include="ProviderModuleImpl/Anthropic.fs" />
@@ -38,8 +39,7 @@
     <PackageReference Include="FsHttp" Version="14.5.0" />
     <PackageReference Include="GtkSharp" Version="3.24.24.95" />
     <PackageReference Include="LamgEnv" Version="0.0.2" />
-    <PackageReference Include="LangChain" Version="0.14.1-dev.47" />
-    <PackageReference Include="LangChain.Providers.Anthropic" Version="0.14.1-dev.73" />
+    <PackageReference Include="LangChain" Version="0.15.0" />
     <PackageReference Include="OpenAI" Version="2.0.0-beta.3" />
   </ItemGroup>
 
