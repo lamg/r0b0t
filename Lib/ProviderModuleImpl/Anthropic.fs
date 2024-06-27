@@ -43,12 +43,6 @@ let eventToMsg (line: EventLine) =
     | _ -> None
   | _ -> None
 
-let appendNone (xs: AsyncSeq<'a option>) =
-  AsyncSeq.append xs (AsyncSeq.ofSeq [ None ])
-
-let procEventLines (xs: AsyncSeq<EventLine>) =
-  xs |> AsyncSeq.choose eventToMsg |> AsyncSeq.map Some |> appendNone
-
 
 let ask (key: Key) (m: GetProviderImpl.Model) (question: Prompt) =
   http {
@@ -66,7 +60,7 @@ let ask (key: Key) (m: GetProviderImpl.Model) (question: Prompt) =
   |> Request.send
   |> Response.toStream
   |> readEvents
-  |> procEventLines
+  |> procEventLines eventToMsg
 
 let providerModule: ProviderModule =
   { provider = "Anthropic"

@@ -40,3 +40,9 @@ let readEvents (sr: IO.Stream) =
       | Some e -> yield e
       | None -> ()
   }
+
+let appendNone (xs: AsyncSeq<'a option>) =
+  AsyncSeq.append xs (AsyncSeq.ofSeq [ None ])
+
+let procEventLines eventToMsg (xs: AsyncSeq<EventLine>) =
+  xs |> AsyncSeq.choose eventToMsg |> AsyncSeq.map Some |> appendNone

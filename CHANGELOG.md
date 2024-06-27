@@ -5,11 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.5] - 2024-06-27
+
+Added:
+
+- Support for [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
 
 Fixed:
 
 - Streaming text from Anthropic.
+- Streaming text from HuggingFace
 
 ## [0.0.4] - 2024-06-25
 
@@ -34,4 +39,4 @@ Changed:
 - Initial Nuget.org release
 - OpenAI GPT4o, Dalle 3, GPT 3.5 support
 - Github Copilot support
-- Anthropic Haiku, Sonnet 3, Opus 3 support
+- Anthropic Haiku, Sonnet 3, Opus 3 support.

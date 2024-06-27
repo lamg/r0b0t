@@ -1,37 +1,48 @@
 module ProviderModuleImpl.HuggingFace
 
 open FSharp.Control
-open LangChain.Providers
-open LangChain.Providers.HuggingFace
-open LangChain.Providers.HuggingFace.Predefined
+open FsHttp
 open Stream.Types
 open GetProviderImpl
+open ServerSentEvents
 
 let gpt2 = Model "gpt2"
 let metaLlama3_8B = Model "meta-llama/Meta-Llama-3-8B"
 let microsoftPhi2 = "microsoft/phi-2"
 let googleBertUncased = "google-bert/bert-base-uncased"
 
+type Message =
+  { index: int
+    token: {| text: string |} }
+
+let deserializeActive (json: string) =
+  try
+    System.Text.Json.JsonSerializer.Deserialize<Message> json |> Some
+  with _ ->
+    None
+
+
+let eventToMsg (line: EventLine) =
+  match line with
+  | Data d ->
+    match deserializeActive d with
+    | Some { token = t } -> Some(Word t.text)
+    | _ -> None
+  | _ -> None
+
 let ask (key: Key) (m: GetProviderImpl.Model) (question: Prompt) =
-  let client = new System.Net.Http.HttpClient()
+  http {
+    POST "https://api-inference.huggingface.co/models/microsoft/phi-2"
+    AuthorizationBearer key
 
-  let genAsync =
-    match m with
-    | _ when m = gpt2 ->
-      let prov = HuggingFaceProvider(key, client)
-      Gpt2Model prov |> _.GenerateAsync
-    | _ when m = metaLlama3_8B ->
-      let conf = HuggingFaceConfiguration()
-      conf.ApiKey <- key
-      conf.ModelId <- metaLlama3_8B
-      let prov = HuggingFaceProvider(conf, client)
-      HuggingFaceChatModel(prov, conf.ModelId).GenerateAsync
-    | _ -> failwith $"unsupported model {m}"
+    body
 
-  let msg = genAsync (ChatRequest.op_Implicit question)
-
-  [ msg.Result.LastMessageContent |> Word |> Some; None ] |> AsyncSeq.ofSeq
-
+    jsonSerialize {| inputs = question; stream = true |}
+  }
+  |> Request.send
+  |> Response.toStream
+  |> readEvents
+  |> procEventLines eventToMsg
 
 let providerModule: ProviderModule =
   { provider = "HuggingFace"
