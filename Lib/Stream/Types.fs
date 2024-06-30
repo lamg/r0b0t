@@ -2,9 +2,14 @@ module Stream.Types
 
 open FSharp.Control
 
+type PngData =
+  { image: byte array
+    prompt: string
+    revisedPrompt: string }
+
 type LlmData =
   | Word of string
-  | PngBase64 of string
+  | PngData of PngData
 
 type GetProvider = unit -> AsyncSeq<LlmData option>
 

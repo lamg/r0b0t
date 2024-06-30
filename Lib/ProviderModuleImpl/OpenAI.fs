@@ -24,11 +24,6 @@ let toAsyncSeqString resp =
       let last = [ None ] |> AsyncSeq.ofSeq
       AsyncSeq.append xs last
 
-let imagineFake (key: Key) (description: Prompt) =
-  let bs =
-    System.IO.File.ReadAllBytes "logo_small.png" |> System.Convert.ToBase64String
-
-  [ Some(PngBase64 bs); None ] |> AsyncSeq.ofSeq
 
 let imagine (key: Key) (description: Prompt) =
   let client = new OpenAIService(OpenAiOptions(ApiKey = key))
@@ -51,8 +46,13 @@ let imagine (key: Key) (description: Prompt) =
     let imgs =
       if resp.Successful then
         resp.Results
-        |> Seq.map (fun x -> [ x.B64 |> PngBase64 |> Some; x.RevisedPrompt |> Word |> Some ])
-        |> Seq.concat
+        |> Seq.map (fun x ->
+          { image = System.Convert.FromBase64String x.B64
+            prompt = description
+            revisedPrompt = x.RevisedPrompt }
+          |> PngData
+          |> Some)
+
       else
         resp.Error.Messages |> Seq.map (Word >> Some)
 

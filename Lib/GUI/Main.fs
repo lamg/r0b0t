@@ -45,7 +45,7 @@ let newAppWindow () =
       let insertData =
         function
         | Word w -> io.insertWord w
-        | PngBase64 i -> io.insertImage i
+        | PngData i -> io.insertImage i
 
       let getProvider = newGetProvider (confHandler.getConf ()) io.getPrompt
 

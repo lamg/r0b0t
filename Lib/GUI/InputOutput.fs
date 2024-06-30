@@ -3,23 +3,36 @@ module GUI.InputOutput
 open System
 open Gdk
 open Gtk
-
 open GetProviderImpl
+open SixLabors.ImageSharp
+open SixLabors.ImageSharp.Formats.Png.Chunks
+open Stream.Types
 
 type InputOutput =
   { getPrompt: unit -> Prompt
     keyRelease: (KeyReleaseEventArgs -> unit) -> unit
     insertWord: string -> unit
-    insertImage: string -> unit }
+    insertImage: PngData -> unit }
 
-let saveImage (bs: byte array) =
+[<Literal>]
+let promptPngMetadataKey = "prompt"
+
+[<Literal>]
+let revisedPromptPngMetadataKey = "revised_prompt"
+
+let saveImage (d: PngData) =
+  use image = Image.Load d.image
+  let pngMeta = image.Metadata.GetPngMetadata()
+  pngMeta.TextData.Add(PngTextData(promptPngMetadataKey, d.prompt, "en", promptPngMetadataKey))
+  pngMeta.TextData.Add(PngTextData(revisedPromptPngMetadataKey, d.revisedPrompt, "en", revisedPromptPngMetadataKey))
   let now = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH-mm-ss")
-  IO.File.WriteAllBytes($"img_{now}.png", bs)
+  let outputPath = $"img_{now}.png"
+  image.Save(outputPath)
 
-let insertImage (insertWord: string -> unit) (chatDisplay: TextView) (content: string) =
-  let bs = Convert.FromBase64String content
-  saveImage bs
-  let p = new PixbufLoader(bs)
+let insertImage (insertWord: string -> unit) (chatDisplay: TextView) (d: PngData) =
+
+  saveImage d
+  let p = new PixbufLoader(d.image)
   let height = chatDisplay.AllocatedHeight / 2
   let width = chatDisplay.AllocatedWidth / 2
   let np = p.Pixbuf.ScaleSimple(height, width, InterpType.Bilinear)
@@ -27,11 +40,10 @@ let insertImage (insertWord: string -> unit) (chatDisplay: TextView) (content: s
 
   GLib.Idle.Add(fun _ ->
     buff.InsertPixbuf(ref buff.EndIter, np)
+    insertWord d.revisedPrompt
+    insertWord "\n\n"
     false)
   |> ignore
-
-  insertWord "\n\n"
-
 
 let getPrompt (chatInput: TextView, chatDisplay: TextView) =
   fun () ->
