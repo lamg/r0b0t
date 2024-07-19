@@ -87,6 +87,7 @@ let providerModule: ProviderModule =
         { answerer = ask key
           models =
             [ Models.Gpt_4o
+              Models.Gpt_4o_mini
               Models.Gpt_3_5_Turbo
               Models.Gpt_4
               Models.Gpt_3_5_Turbo_16k
