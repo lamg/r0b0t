@@ -17,7 +17,7 @@ type LlmData =
   | PngData of PngData
 
 type KeyProvider =
-  abstract member key: unit -> Key
+  abstract member key: unit -> Key option
 
 type DataConsumer =
   abstract member consume: LlmData -> unit
@@ -39,7 +39,7 @@ type ConfigurationManager =
   abstract member loadConfiguration: unit -> Configuration
 
 type CompletionStreamer =
-  abstract member streamCompletion: Key -> Model -> Prompt -> AsyncSeq<LlmData>
+  abstract member streamCompletion: Key option -> Model -> Prompt -> AsyncSeq<LlmData>
 
 type AvailableModelsProvider =
   abstract member availableModels: unit -> Model list
