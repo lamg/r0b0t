@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>r0b0tLib</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Core.fs" />
+    <Compile Include="OpenAI.fs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="OpenAI" Version="2.0.0-beta.7" />
+    <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
+  </ItemGroup>
+</Project>
