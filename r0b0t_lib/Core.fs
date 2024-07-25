@@ -3,7 +3,14 @@ module r0b0tLib.Core
 open FSharp.Control
 
 type Key = Key of string
-type Model = Model of string
+
+type Model =
+  | Model of string
+
+  override this.ToString() =
+    let (Model r) = this
+    r
+
 type Prompt = Prompt of string
 
 type PngData =

@@ -11,8 +11,10 @@ type Controls =
     rightBox: Box
     confBox: Box
     navigationHandler: NavigationHandler
-    mainBox: Box
-    listBox: ListBox }
+    windowBox: Box
+    listBox: ListBox
+    providerLabel: Label
+    modelLabel: Label }
 
 let sourceView () =
   GtkSource.Module.Initialize()
@@ -52,11 +54,22 @@ let onPromptInputKeyRelease (_: EventControllerKey) (e: EventControllerKey.KeyRe
   | _ -> ()
 
 
-
-let newControls () =
+let providerModelBar () =
   let box = new Box()
   box.SetOrientation Orientation.Horizontal
-  box.SetHomogeneous true
+  box.Hexpand <- true
+  box.Homogeneous <- true
+  let provider = new Label()
+  let model = new Label()
+  box.Append provider
+  box.Append model
+  box, provider, model
+
+let newControls () =
+  let interactionBox = new Box()
+  interactionBox.SetOrientation Orientation.Horizontal
+  interactionBox.Vexpand <- true
+  interactionBox.SetHomogeneous true
 
   let left, leftSrc = textBox ()
   leftSrc.Focusable <- false
@@ -75,9 +88,14 @@ let newControls () =
 
   rightSrc.GrabFocus() |> ignore
 
+  interactionBox.Append left
+  interactionBox.Append right
 
-  box.Append left
-  box.Append right
+  let topBar, providerLabel, modelLabel = providerModelBar ()
+  let windowBox = new Box()
+  windowBox.SetOrientation Orientation.Vertical
+  windowBox.Append topBar
+  windowBox.Append interactionBox
 
   { leftSrc = leftSrc
     rightSrc = rightSrc
@@ -85,5 +103,7 @@ let newControls () =
     confBox = confBox
     rightBox = right
     navigationHandler = nav
-    mainBox = box
-    listBox = listBox }
+    windowBox = windowBox
+    listBox = listBox
+    providerLabel = providerLabel
+    modelLabel = modelLabel }

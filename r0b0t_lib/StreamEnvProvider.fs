@@ -42,20 +42,21 @@ type StreamEnvProvider(controls: Controls) =
   let onCtrlEnterSendPrompt (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
     match e.State, e.Keycode with
     | ModifierType.ControlMask, 36ul ->
-      printfn "control + enter"
       controls.leftSrc.Buffer.Text <- ""
       controls.rightSrc.Buffer.Text |> Prompt |> Completion |> eventSource.Trigger
     | ModifierType.ControlMask, 27ul ->
       // control + p
-      printfn "control + p"
       controls.rightSrc.Hide()
       controls.confBox.Show()
     | ModifierType.NoModifierMask, 9ul ->
       // escape
-      printfn "escape"
       controls.confBox.Hide()
       controls.rightSrc.Show()
     | _ -> ()
+
+  let updateControls () =
+    conf.provider.ToString() |> controls.providerLabel.SetText
+    conf.model.ToString() |> controls.modelLabel.SetText
 
   do
     let ctrlPController = EventControllerKey.New()
@@ -74,6 +75,7 @@ type StreamEnvProvider(controls: Controls) =
 
     controls.rightSrc.AddController ctrlEnterController
     controls.listBox.add_OnRowActivated (GObject.SignalHandler<ListBox, ListBox.RowActivatedSignalArgs> onActivateItem)
+    updateControls ()
 
   member _.TriggerEvent(request: Request) = eventSource.Trigger(request)
 
@@ -81,7 +83,7 @@ type StreamEnvProvider(controls: Controls) =
 
   member _.consume(d: LlmData) =
     GLib.Functions.IdleAdd(
-      2,
+      int GLib.ThreadPriority.Urgent,
       fun _ ->
         match d with
         | Word w ->
@@ -111,6 +113,7 @@ type StreamEnvProvider(controls: Controls) =
   member this.storeConfiguration c =
     // TODO serialize and store
     conf <- c
+    updateControls ()
 
   member this.streamCompletion provider key model prompt =
     match provider with

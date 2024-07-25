@@ -39,4 +39,4 @@ let main _ =
   Module.Initialize()
   let controls = Controls.newControls ()
   controls |> StreamEnvProvider.newStreamEnv |> Core.plugLogicToEnv
-  mainWindow controls.mainBox
+  mainWindow controls.windowBox
