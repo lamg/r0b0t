@@ -1,8 +1,8 @@
-module r0b0tLib.MainWindow
+module r0b0tLib.Controls
 
 open Gdk
 open Gtk
-open r0b0tLib.ConfNavigation
+open r0b0tLib.CommandPalette
 
 type Controls =
   { leftSrc: GtkSource.View
@@ -51,23 +51,7 @@ let onPromptInputKeyRelease (_: EventControllerKey) (e: EventControllerKey.KeyRe
     printfn "control + enter"
   | _ -> ()
 
-let onRightBoxOnKeyRelease
-  (rightSrc: GtkSource.View, confBox: Box)
-  (_: EventControllerKey)
-  (e: EventControllerKey.KeyReleasedSignalArgs)
-  =
-  match e.State, e.Keycode with
-  | ModifierType.ControlMask, 27ul ->
-    // control + p
-    printfn "control + p"
-    rightSrc.Hide()
-    confBox.Show()
-  | ModifierType.NoModifierMask, 9ul ->
-    // escape
-    printfn "escape"
-    confBox.Hide()
-    rightSrc.Show()
-  | _ -> ()
+
 
 let newControls () =
   let box = new Box()

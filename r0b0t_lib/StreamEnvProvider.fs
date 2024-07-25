@@ -5,8 +5,8 @@ open Gdk
 open GdkPixbuf
 
 open Core
-open MainWindow
-open ConfNavigation
+open Controls
+open CommandPalette
 
 type StreamEnvProvider(controls: Controls) =
   let eventSource = Event<Request>()
@@ -45,10 +45,6 @@ type StreamEnvProvider(controls: Controls) =
       printfn "control + enter"
       controls.leftSrc.Buffer.Text <- ""
       controls.rightSrc.Buffer.Text |> Prompt |> Completion |> eventSource.Trigger
-    | _ -> ()
-
-  let onCtrlPShowConf (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
-    match e.State, e.Keycode with
     | ModifierType.ControlMask, 27ul ->
       // control + p
       printfn "control + p"

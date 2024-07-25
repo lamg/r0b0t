@@ -1,4 +1,4 @@
-module r0b0tLib.ConfNavigation
+module r0b0tLib.CommandPalette
 
 open System
 open Gtk
