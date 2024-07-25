@@ -9,7 +9,9 @@
   <ItemGroup>
     <Compile Include="Core.fs" />
     <Compile Include="OpenAI.fs" />
-    <Compile Include="Gtk.fs" />
+    <Compile Include="ConfNavigation.fs" />
+    <Compile Include="MainWindow.fs" />
+    <Compile Include="StreamEnvProvider.fs" />
   </ItemGroup>
   
   <ItemGroup>

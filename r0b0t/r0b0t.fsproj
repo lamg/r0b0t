@@ -10,7 +10,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\r0b0t_lib\r0b0t_lib.fsproj" />
+        <ProjectReference Include="..\r0b0t_lib\r0b0t_lib.fsproj"/>
     </ItemGroup>
 
 </Project>
