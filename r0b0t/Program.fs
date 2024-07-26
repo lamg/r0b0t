@@ -22,7 +22,7 @@ let onActivateApp (controls: Controls.Controls) (sender: Gio.Application) (_: Ev
   StyleContext.AddProviderForDisplay(Gdk.Display.GetDefault(), css, 1ul)
 
   window.Title <- "r0b0t"
-  window.SetDefaultSize(800, 600)
+  window.SetDefaultSize(1024, 800)
   window.SetChild controls.windowBox
   window.Show()
   controls.rightSrc.GrabFocus() |> ignore
