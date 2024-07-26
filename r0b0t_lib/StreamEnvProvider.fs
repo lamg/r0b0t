@@ -29,19 +29,21 @@ type StreamEnvProvider(controls: Controls) =
     let current = e.Row.GetIndex() |> controls.navigationHandler.moveToChild
 
     match current with
-    | [ Leaf(_, cmd) ] ->
+    | Leaf(_, cmd) ->
       // trigger event with command
+      printfn $"trigger {cmd}"
       ()
-    | [ Node { value = v; children = chl } ] ->
+    | Node { value = v; children = chl } ->
+      printfn $"moving to children of {v}"
       // replace current list elements by chl
       ()
-    | _ -> failwith "todo"
 
     printfn $"activated {e.Row.Child.Name} row"
 
   let onCtrlEnterSendPrompt (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
     match e.State, e.Keycode with
     | ModifierType.ControlMask, 36ul ->
+      // control + enter
       controls.leftSrc.Buffer.Text <- ""
       controls.rightSrc.Buffer.Text |> Prompt |> Completion |> eventSource.Trigger
     | ModifierType.ControlMask, 27ul ->

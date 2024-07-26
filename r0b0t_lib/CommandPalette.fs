@@ -39,7 +39,7 @@ let setProviderTree =
   Node
     { value =
         { name = "Set provider"
-          description = "Set provider" }
+          description = "Set which LLM service will handle the requests" }
       children =
         [| Leaf({ name = "OpenAI"; inputType = Bool }, SetProvider OpenAI)
            Leaf({ name = "Anthropic"; inputType = Bool }, SetProvider Anthropic)
@@ -54,14 +54,22 @@ let setModelTree =
   Node
     { value =
         { name = "Set model"
-          description = "set model" }
+          description = "Set which specific LLM will handle requestes in the selected provider" }
       children = [||] }
 
 let setApiKeyTree =
   Node
     { value =
-        { name = "set api key"
-          description = "set api key" }
+        { name = "Set API key"
+          description = "Set the API key to authorize this client to make requests to the selected provider" }
+      children = [||] }
+
+let setFont =
+  Node
+    { value =
+        { name = "Set font"
+          description = "Font settings for all controls" }
+      // children = [| setLeftFont; setRightFont; setTextViewFont |] }
       children = [||] }
 
 let root =
@@ -75,11 +83,13 @@ type NavigationHandler() =
   let mutable currentLevelPath = []
   let mutable currentFilteredPaths = []
 
-  member _.getCurrentItems() : Tree<ConfRoot, Setting> list = []
+  member _.getCurrentItems() : Tree<ConfRoot, Setting> array =
+    [| setProviderTree; setModelTree; setApiKeyTree |]
+
   member this.filterTree text = this.getCurrentItems ()
-  member this.moveToChild index = this.getCurrentItems ()
 
-
+  member this.moveToChild index =
+    this.getCurrentItems () |> Array.item index
 
 let settingLabel (text: string) =
   let l = new Label()
@@ -135,7 +145,7 @@ let settingGroup g =
   item.Append descrLabel
   item
 
-let populateListBox (l: ListBox) (xs: Tree<ConfRoot, Setting> list) =
+let populateListBox (l: ListBox) (xs: Tree<ConfRoot, Setting> array) =
   let appendLeaf (proto, cmd) =
     match proto.inputType with
     | Bool -> boolSetting proto.name |> l.Append
@@ -147,7 +157,7 @@ let populateListBox (l: ListBox) (xs: Tree<ConfRoot, Setting> list) =
   let appendNode r = r |> settingGroup |> l.Append
 
   xs
-  |> List.iter (function
+  |> Array.iter (function
     | Leaf x -> appendLeaf x
     | Node y -> appendNode y.value)
 
