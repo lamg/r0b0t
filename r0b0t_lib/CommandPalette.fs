@@ -178,4 +178,4 @@ let configurationBox (nav: NavigationHandler) =
 
   box.Append s
   box.Append l
-  box, l
+  box,s, l

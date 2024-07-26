@@ -12,6 +12,7 @@ type Controls =
     navigationHandler: NavigationHandler
     windowBox: Box
     listBox: ListBox
+    searchConf: SearchEntry
     providerLabel: Label
     modelLabel: Label }
 
@@ -43,8 +44,9 @@ let rightPanel () =
   box.Homogeneous <- true
   let source = sourceView ()
   source.AddCssClass "left_text_view"
+
   let nav = NavigationHandler()
-  let confBox, listBox = configurationBox nav
+  let confBox, searchConf, listBox = configurationBox nav
   confBox.Hide()
   box.Append confBox
   box.Append source
@@ -56,8 +58,7 @@ let rightPanel () =
   let style = ".left_text_view {" + body + "}"
   css.LoadFromString style
   StyleContext.AddProviderForDisplay(Gdk.Display.GetDefault(), css, 1ul)
-
-  scrollable, box, source, confBox, listBox, nav
+  scrollable, box, source, confBox, searchConf, listBox, nav
 
 let leftPanel () =
   let box = new Box()
@@ -105,7 +106,9 @@ let newControls () =
   interactionBox.SetHomogeneous true
 
   let leftScroll, leftSrc, picture = leftPanel ()
-  let rightScroll, rightBox, rightSrc, confBox, listBox, nav = rightPanel ()
+
+  let rightScroll, rightBox, rightSrc, confBox, searchConf, listBox, nav =
+    rightPanel ()
 
   interactionBox.Append leftScroll
   interactionBox.Append rightScroll
@@ -125,5 +128,6 @@ let newControls () =
     navigationHandler = nav
     windowBox = windowBox
     listBox = listBox
+    searchConf = searchConf
     providerLabel = providerLabel
     modelLabel = modelLabel }

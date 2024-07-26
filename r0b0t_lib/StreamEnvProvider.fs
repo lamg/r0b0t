@@ -50,10 +50,17 @@ type StreamEnvProvider(controls: Controls) =
       // control + p
       controls.rightSrc.Hide()
       controls.confBox.Show()
+      controls.searchConf.GrabFocus() |> ignore
+    | _ -> ()
+
+  let onEscHideConfBox (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
+    match e.State, e.Keycode with
     | ModifierType.NoModifierMask, 9ul ->
       // escape
       controls.confBox.Hide()
       controls.rightSrc.Show()
+      controls.rightSrc.GrabFocus() |> ignore
+    | ModifierType.ControlMask, 27ul -> controls.searchConf.GrabFocus() |> ignore
     | _ -> ()
 
   let updateControls () =
@@ -77,6 +84,15 @@ type StreamEnvProvider(controls: Controls) =
 
     controls.rightSrc.AddController ctrlEnterController
     controls.listBox.add_OnRowActivated (GObject.SignalHandler<ListBox, ListBox.RowActivatedSignalArgs> onActivateItem)
+
+    let escController = EventControllerKey.New()
+
+    escController.add_OnKeyReleased (
+      GObject.SignalHandler<EventControllerKey, EventControllerKey.KeyReleasedSignalArgs> onEscHideConfBox
+    )
+
+    controls.confBox.AddController escController
+
     updateControls ()
 
   member _.TriggerEvent(request: Request) = eventSource.Trigger(request)
