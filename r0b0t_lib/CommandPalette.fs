@@ -86,7 +86,16 @@ type NavigationHandler() =
   member _.getCurrentItems() : Tree<ConfRoot, Setting> array =
     [| setProviderTree; setModelTree; setApiKeyTree |]
 
-  member this.filterTree text = this.getCurrentItems ()
+  member this.filterTree(text: string) =
+    let lowerText = text.ToLower()
+
+    this.getCurrentItems ()
+    |> Array.filter (function
+      | Leaf({ name = name }, _) -> name.ToLower().Contains lowerText
+      | Node { value = v } ->
+        let lowerName = v.name.ToLower()
+        let lowerDescription = v.description.ToLower()
+        lowerName.Contains lowerText || lowerDescription.Contains lowerText)
 
   member this.moveToChild index =
     this.getCurrentItems () |> Array.item index
@@ -178,4 +187,4 @@ let configurationBox (nav: NavigationHandler) =
 
   box.Append s
   box.Append l
-  box,s, l
+  box, s, l

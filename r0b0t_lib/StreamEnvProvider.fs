@@ -13,7 +13,7 @@ type StreamEnvProvider(controls: Controls) =
   let eventSource = Event<Request>()
 
   let mutable conf =
-    { model = Model(Gpt4o.ToString())
+    { model = Model(Gpt4oMini.ToString())
       provider = OpenAI
       keys =
         [ OpenAI, "openai_key"
