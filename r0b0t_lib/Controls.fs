@@ -14,7 +14,8 @@ type Controls =
     listBox: ListBox
     searchConf: SearchEntry
     providerLabel: Label
-    modelLabel: Label }
+    modelLabel: Label
+    spinner: Spinner }
 
 let sourceView () =
   GtkSource.Module.Initialize()
@@ -93,11 +94,12 @@ let providerModelBar () =
   provider.Hexpand <- true
   let model = new Label()
   model.Hexpand <- true
-
+  let spinner = new Spinner()
   box.Append provider
   box.Append model
+  box.Append spinner
 
-  box, provider, model
+  box, provider, model, spinner
 
 let newControls () =
   let interactionBox = new Box()
@@ -113,7 +115,7 @@ let newControls () =
   interactionBox.Append leftScroll
   interactionBox.Append rightScroll
 
-  let topBar, providerLabel, modelLabel = providerModelBar ()
+  let topBar, providerLabel, modelLabel, spinner = providerModelBar ()
 
   let windowBox = new Box()
   windowBox.SetOrientation Orientation.Vertical
@@ -130,4 +132,5 @@ let newControls () =
     listBox = listBox
     searchConf = searchConf
     providerLabel = providerLabel
-    modelLabel = modelLabel }
+    modelLabel = modelLabel
+    spinner = spinner }

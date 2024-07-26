@@ -1,5 +1,6 @@
 module r0b0tLib.StreamEnvProvider
 
+open FSharp.Control
 open Gtk
 open Gdk
 open GdkPixbuf
@@ -25,7 +26,7 @@ type StreamEnvProvider(controls: Controls) =
           | _ -> None)
         |> Map.ofList }
 
-  let onActivateItem (l: ListBox) (e: ListBox.RowActivatedSignalArgs) =
+  let onActivateItem (_: ListBox) (e: ListBox.RowActivatedSignalArgs) =
     let current = e.Row.GetIndex() |> controls.navigationHandler.moveToChild
 
     match current with
@@ -123,6 +124,14 @@ type StreamEnvProvider(controls: Controls) =
     )
     |> ignore
 
+  member _.consumptionEnd() = controls.spinner.Stop()
+
+  member _.consumeException(e: exn) =
+    match e with
+    | :? System.ArgumentException when e.Message.Contains "The input sequence was empty" -> ()
+    | _ -> printfn $"{e.GetType().ToString()} msg = {e.Message}"
+
+    controls.spinner.Stop()
 
   member this.loadConfiguration() =
     // TODO load from storage and deserialize
@@ -134,6 +143,8 @@ type StreamEnvProvider(controls: Controls) =
     updateControls ()
 
   member this.streamCompletion provider key model prompt =
+    controls.spinner.Start()
+
     match provider with
     | OpenAI when model = Model(Dalle3.ToString()) ->
       // TODO show to the user a timer with the timeout as upper limit
@@ -154,4 +165,6 @@ let newStreamEnv (c: Controls) =
       member _.streamCompletion provider key model prompt =
         m.streamCompletion provider key model prompt
 
-      member _.consume data = m.consume data }
+      member _.consume data = m.consume data
+      member _.consumptionEnd() = m.consumptionEnd ()
+      member _.consumeException e = m.consumeException e }

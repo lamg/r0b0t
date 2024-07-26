@@ -77,6 +77,8 @@ type RequestProvider =
 
 type DataConsumer =
   abstract member consume: LlmData -> unit
+  abstract member consumptionEnd: unit -> unit
+  abstract member consumeException: exn -> unit
 
 type ConfigurationManager =
   abstract member storeConfiguration: Configuration -> unit
@@ -84,6 +86,7 @@ type ConfigurationManager =
 
 type CompletionStreamer =
   abstract member streamCompletion: Provider -> Key -> Model -> Prompt -> AsyncSeq<LlmData>
+
 
 type StreamEnv =
   inherit RequestProvider
@@ -95,11 +98,18 @@ let requestProcessor (env: StreamEnv) (r: Request) =
   let conf = env.loadConfiguration ()
 
   let stream provider model prompt =
-    match Map.tryFind provider conf.keys with
-    | Some key -> env.streamCompletion provider key model prompt
-    | None -> [ Word $"key not found for {conf.provider}" ] |> AsyncSeq.ofSeq
-    |> AsyncSeq.iter env.consume
-    |> Async.Start
+    let comp =
+      match Map.tryFind provider conf.keys with
+      | Some key -> env.streamCompletion provider key model prompt
+      | None -> [ Word $"key not found for {conf.provider}" ] |> AsyncSeq.ofSeq
+      |> AsyncSeq.iter env.consume
+
+    Async.StartWithContinuations(
+      computation = comp,
+      continuation = env.consumptionEnd,
+      exceptionContinuation = env.consumeException,
+      cancellationContinuation = ignore
+    )
 
   match r with
   | SetAnthropicModel m ->
