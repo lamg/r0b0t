@@ -1,12 +1,4 @@
-<p align="center">
-  <a href="https://www.nuget.org/packages/r0b0t">
-    <img
-      src="https://raw.githubusercontent.com/lamg/r0b0t/master/docs/logo.png"
-      alt="GTK application to interact with Large Language Models"
-      style="border-radius: 50%;width: 100px"
-    />
-  </a>
-</p>
+![logo](./docs/logo_small.png)
 
 [![NuGet Version][nuget-version]][r0b0t]
 [![NuGet Downloads][nuget-downloads]][r0b0t]
