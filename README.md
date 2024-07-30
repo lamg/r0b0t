@@ -1,4 +1,4 @@
-![logo](./docs/logo_small.png)
+[![logo](./docs/logo_small.png)][r0b0t]
 
 [![NuGet Version][nuget-version]][r0b0t]
 [![NuGet Downloads][nuget-downloads]][r0b0t]
