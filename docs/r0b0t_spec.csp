@@ -1,0 +1,72 @@
+event introduce_prompt: the user types a prompt in the right panel of the r0b0t window.
+
+event ctrl_enter: the user presses the Control + Enter key combination.
+
+event answer_stream: the left panel shows a stream of characters coming from the API serving the configured language model.
+
+event answer_picture: the left panel shows an image resulting of sending a prompt to an API serving the configured image generation model.
+
+event ctrl_p: the the user presses the Control + p key combination.
+
+event show_command_palette: the left panel shows a list of items and a search entry to filter them. Each item is a command or a group of commands.
+
+event show_prompt_input: the left panel shows a text box where the user can write prompts and send them later to the language model.
+
+event select_command: the user writes a text to filter a list of items by name or description. Also it's possible selecting commands by pressing TAB to jump from the search entry to the item list, and once there use the arrow keys to select a specific one and executing, or opening the command group, by pressing enter.
+
+event set_api_key: the user presses enter on the _Set API key_ item.
+
+event choose_provider: the user chooses an item in the list, representing a provider.
+
+event introduce_api_key: the user writes an API key.
+
+event set_provider: the user presses enter on the _Set provider_ item.
+
+event set_model: the user presses enter on the _Set model_ item.
+
+event choose_provider: the user chooses an item from the list, representing a provider.
+
+event choose_model: the user chooses an item from the list, representing a model for the configured provider.
+
+event crash: represents a failure of the R0B0T implementation to follow the specified behavior. None of the processes below produces it, but a trace of the implementation could include it to show something went wrong.
+
+αR0B0T = {
+  introduce_prompt,
+  ctrl_enter,
+  answer_stream,
+  answer_picture,
+  ctrl_p,
+  show_command_palette,
+  esc,
+  show_prompt_input,
+  select_command,
+  set_api_key,
+  introduce_api_key,
+  set_provider,
+  choose_provider,
+  set_model,
+  choose_model,
+  crash
+}
+
+EXEC_COMMAND =
+  set_api_key → choose_provider → introduce_api_key → R0B0T
+  | set_provider → choose_provider → R0B0T
+  | set_model → choose_model → R0B0T
+  | set_image_parameters → (
+    set_size → CMD_PALETTE
+    set_style → CMD_PALETTE
+  )
+
+CMD_PALETTE =
+  esc → show_prompt_input → R0B0T
+  | introduce_command_filter → select_command → EXEC_COMMAND
+  | select_command → EXEC_COMMAND
+
+R0B0T =
+  µX •
+    show_prompt_input → introduce_prompt → ctrl_enter → (
+      answer_stream → X
+      | answer_picture → X
+    )
+    | ctrl_p → show_command_palette → CMD_PALETTE
