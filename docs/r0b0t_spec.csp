@@ -10,6 +10,8 @@ event ctrl_p: the the user presses the Control + p key combination.
 
 event show_command_palette: the left panel shows a list of items and a search entry to filter them. Each item is a command or a group of commands.
 
+event esc: the user presses the Escape key.
+
 event show_prompt_input: the left panel shows a text box where the user can write prompts and send them later to the language model.
 
 event select_command: the user writes a text to filter a list of items by name or description. Also it's possible selecting commands by pressing TAB to jump from the search entry to the item list, and once there use the arrow keys to select a specific one and executing, or opening the command group, by pressing enter.
