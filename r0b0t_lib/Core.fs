@@ -31,37 +31,23 @@ type Provider =
 [<Literal>]
 let dalle3 = "dall-e-3"
 
-type OpenAIModel =
-  | Gpt4o
-  | Gpt4oMini
-  | Dalle3
+[<Literal>]
+let gpt4oMini = "gpt-4o-mini"
 
-  override this.ToString() =
-    match this with
-    | Gpt4o -> "gpt-4o"
-    | Gpt4oMini -> "gpt-4o-mini"
-    | Dalle3 -> dalle3
+let openAIModels = [ dalle3; "gpt-4o"; gpt4oMini ]
+let githubModels = [ "copilot" ]
+let huggingFaceModels = [ "gpt2" ]
 
-type GitHubModel = Copilot
-type HuggingFaceModel = Gpt2
-
-type AnthropicModel =
-  | Sonnet35
-  | Haiku3
-  | Opus3
-
-  override this.ToString() =
-    match this with
-    | Sonnet35 -> "claude-3-5-sonnet"
-    | Haiku3 -> "claude-3-haiku"
-    | Opus3 -> "claude-3-opus"
+let anthropicModels =
+  [ "claude-3-5-sonnet-20240620"
+    "claude-3-haiku-20240307"
+    "claude-3-opus-20240229" ]
 
 type ApiKey = string
 
 type Request =
   | SetProvider of Provider
-  | SetOpenAIModel of OpenAIModel
-  | SetAnthropicModel of AnthropicModel
+  | SetModel of Model
   | SetApiKey of Provider * ApiKey
   | Completion of Prompt
   | Imagine of Prompt
@@ -112,11 +98,7 @@ let requestProcessor (env: StreamEnv) (r: Request) =
     )
 
   match r with
-  | SetAnthropicModel m ->
-    env.storeConfiguration
-      { conf with
-          model = Model(m.ToString()) }
-  | SetOpenAIModel m ->
+  | SetModel m ->
     env.storeConfiguration
       { conf with
           model = Model(m.ToString()) }
@@ -126,6 +108,8 @@ let requestProcessor (env: StreamEnv) (r: Request) =
     env.storeConfiguration
       { conf with
           keys = Map.add provider (Key s) conf.keys }
-  | Imagine prompt -> stream OpenAI (Model(Dalle3.ToString())) prompt
+  | Imagine prompt -> stream OpenAI (Model dalle3) prompt
 
-let plugLogicToEnv (env: StreamEnv) = env.event.Add(requestProcessor env)
+let plugLogicToEnv (env: StreamEnv) =
+  env.loadConfiguration () |> env.storeConfiguration
+  env.event.Add(requestProcessor env)

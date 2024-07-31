@@ -1,5 +1,6 @@
 module r0b0tLib.StreamEnvProvider
 
+open System
 open FSharp.Control
 open Gtk
 open Gdk
@@ -9,11 +10,16 @@ open Core
 open Controls
 open CommandPalette
 
+type SerializableConf =
+  { provider_keys: Map<string, string>
+    model: string
+    provider: string }
+
 type StreamEnvProvider(controls: Controls) =
   let eventSource = Event<Request>()
 
   let mutable conf =
-    { model = Model(Gpt4oMini.ToString())
+    { model = Model gpt4oMini
       provider = OpenAI
       keys =
         [ OpenAI, "openai_key"
@@ -67,6 +73,12 @@ type StreamEnvProvider(controls: Controls) =
   let updateControls () =
     conf.provider.ToString() |> controls.providerLabel.SetText
     conf.model.ToString() |> controls.modelLabel.SetText
+
+  let confPath =
+    (LamgEnv.getEnv "HOME" |> Option.defaultValue "~")
+    :: [ ".config"; "r0b0t.json" ]
+    |> List.toArray
+    |> System.IO.Path.Join
 
   do
     let ctrlPController = EventControllerKey.New()
@@ -128,17 +140,83 @@ type StreamEnvProvider(controls: Controls) =
 
   member _.consumeException(e: exn) =
     match e with
-    | :? System.ArgumentException when e.Message.Contains "The input sequence was empty" -> ()
+    | :? ArgumentException when e.Message.Contains "The input sequence was empty" -> ()
     | _ -> printfn $"{e.GetType().ToString()} msg = {e.Message}"
 
     controls.spinner.Stop()
 
   member this.loadConfiguration() =
-    // TODO load from storage and deserialize
+    if System.IO.File.Exists confPath then
+      try
+        confPath
+        |> IO.File.ReadAllText
+        |> Text.Json.JsonSerializer.Deserialize<SerializableConf>
+        |> function
+          | { model = model
+              provider = provider
+              provider_keys = pks } ->
+
+            let pks =
+              try
+                pks.Count |> ignore
+                pks
+              with _ ->
+                Map.empty // a hack to handle the null map, which cannot be handled with Option.ofObj
+
+            let providers =
+              [ OpenAI, openAIModels
+                GitHub, githubModels
+                HuggingFace, huggingFaceModels
+                Anthropic, anthropicModels ]
+
+            let keys =
+              providers
+              |> List.choose (fun (p, _) ->
+                match Map.tryFind (p.ToString()) pks with
+                | Some key -> Some(p, Key key)
+                | None -> None)
+              |> Map.ofList
+
+            providers
+            |> List.tryFind (fun (p, _) -> p.ToString() = provider)
+            |> function
+              | Some(p, models) when models |> List.exists (fun x -> x = model) ->
+                let mergedKeys = conf.keys |> Map.fold (fun m k v -> Map.add k v m) keys
+
+                conf <-
+                  { provider = p
+                    model = Model model
+                    keys = mergedKeys }
+              | Some(p, _) -> eprintfn $"model {model} loaded but not supported by {p}"
+              | None -> eprintfn $"provider {provider} loaded from configuration, but not supported"
+      with e ->
+        eprintfn $"failed to load configuration: {e.Message}"
+    else
+      this.storeConfiguration conf
+
     conf
 
   member this.storeConfiguration c =
-    // TODO serialize and store
+    try
+      let (Model model) = conf.model
+      let provider = conf.provider.ToString()
+
+      let keys =
+        conf.keys
+        |> Map.toList
+        |> List.map (fun (p, Key k) -> p.ToString(), k)
+        |> Map.ofList
+
+      { provider = provider
+        model = model
+        provider_keys = keys }
+      |> (fun v ->
+        let opts = Text.Json.JsonSerializerOptions(WriteIndented = true)
+        Text.Json.JsonSerializer.Serialize<SerializableConf>(v, opts))
+      |> fun json -> IO.File.WriteAllText(confPath, json)
+    with e ->
+      eprintfn $"failed to store configuration: {e.Message}"
+
     conf <- c
     updateControls ()
 
@@ -146,7 +224,7 @@ type StreamEnvProvider(controls: Controls) =
     controls.spinner.Start()
 
     match provider with
-    | OpenAI when model = Model(Dalle3.ToString()) ->
+    | OpenAI when model = Model dalle3 ->
       // TODO show to the user a timer with the timeout as upper limit
       OpenAI.imagine key prompt
     | OpenAI -> OpenAI.complete key model prompt
