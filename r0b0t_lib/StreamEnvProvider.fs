@@ -32,20 +32,39 @@ type StreamEnvProvider(controls: Controls) =
           | _ -> None)
         |> Map.ofList }
 
-  let onActivateItem (_: ListBox) (e: ListBox.RowActivatedSignalArgs) =
-    let current = e.Row.GetIndex() |> controls.navigationHandler.moveToChild
+  let onActivateItem (lb: ListBox) (e: ListBox.RowActivatedSignalArgs) =
+    let index = e.Row.GetIndex()
+    let items = controls.navigationHandler.getCurrentItems ()
+    let current = items |> Array.item index
+
+    let setBoolRow v (r: ListBoxRow) =
+      let box = r.Child :?> Box
+      let check = box.GetLastChild() :?> CheckButton
+      check.Active <- v
+
+    let switchOffCheckButtons () =
+      for i in 0 .. items.Length - 1 do
+        match items[i] with
+        | Leaf({ inputType = Bool }, _) -> lb.GetRowAtIndex i |> setBoolRow false
+        | _ -> ()
+
+    // let current = e.Row.GetIndex() |> uint |> controls.navigationHandler.moveToChild
 
     match current with
-    | Leaf(_, cmd) ->
+    | Leaf(prototype, cmd) ->
       // trigger event with command
-      printfn $"trigger {cmd}"
-      ()
-    | Node { value = v; children = chl } ->
-      printfn $"moving to children of {v}"
-      // replace current list elements by chl
-      ()
+      eventSource.Trigger cmd
 
-    printfn $"activated {e.Row.Child.Name} row"
+      match prototype with
+      | { inputType = Bool } ->
+        switchOffCheckButtons ()
+        setBoolRow true e.Row
+      | _ -> ()
+    //controls.navigationHandler.backToRoot ()
+
+    | Node { value = _; children = xs } ->
+      index |> uint |> controls.navigationHandler.moveToChild
+      populateListBox lb xs
 
   let onCtrlEnterSendPrompt (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
     match e.State, e.Keycode with
@@ -217,10 +236,13 @@ type StreamEnvProvider(controls: Controls) =
     with e ->
       eprintfn $"failed to store configuration: {e.Message}"
 
+  member _.getConfiguration() = conf
+
+  member _.setConfiguration c =
     conf <- c
     updateControls ()
 
-  member this.streamCompletion provider key model prompt =
+  member _.streamCompletion provider key model prompt =
     controls.spinner.Start()
 
     match provider with
@@ -239,6 +261,8 @@ let newStreamEnv (c: Controls) =
       member _.event = m.event
       member _.storeConfiguration c = m.storeConfiguration c
       member _.loadConfiguration() = m.loadConfiguration ()
+      member _.getConfiguration() = m.getConfiguration ()
+      member _.setConfiguration c = m.setConfiguration c
 
       member _.streamCompletion provider key model prompt =
         m.streamCompletion provider key model prompt

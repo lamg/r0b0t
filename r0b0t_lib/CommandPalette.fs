@@ -23,8 +23,8 @@ type GuiControlPrototype = { inputType: InputType; name: string }
 type ConfRoot = { name: string; description: string }
 type Setting = GuiControlPrototype * Request
 
-let currentLevel tree (currentLevelPath: uint list) =
-  currentLevelPath
+let childrenAt tree (path: uint list) =
+  path
   |> List.fold
     (fun r i ->
       match r with
@@ -75,7 +75,7 @@ let setFont =
 let root =
   Node
     { value = { name = "root"; description = "root" }
-      children = [| setProviderTree; setModelTree; setApiKeyTree |] }
+      children = [| setProviderTree; setModelTree; setApiKeyTree; setFont |] }
 
 type NavigationHandler() =
   let tree = root
@@ -83,8 +83,7 @@ type NavigationHandler() =
   let mutable currentLevelPath = []
   let mutable currentFilteredPaths = []
 
-  member _.getCurrentItems() : Tree<ConfRoot, Setting> array =
-    [| setProviderTree; setModelTree; setApiKeyTree |]
+  member _.getCurrentItems() : Tree<ConfRoot, Setting> array = childrenAt tree currentLevelPath
 
   member this.filterTree(text: string) =
     let lowerText = text.ToLower()
@@ -97,8 +96,10 @@ type NavigationHandler() =
         let lowerDescription = v.description.ToLower()
         lowerName.Contains lowerText || lowerDescription.Contains lowerText)
 
-  member this.moveToChild index =
-    this.getCurrentItems () |> Array.item index
+  member _.moveToChild index =
+    currentLevelPath <- index :: currentLevelPath
+
+  member _.backToRoot() = currentLevelPath <- []
 
 let settingLabel (text: string) =
   let l = new Label()
@@ -114,8 +115,7 @@ let settingLabel (text: string) =
 
 let settingCheckBox () =
   let check = new CheckButton()
-  let onToggled (c: CheckButton) _ = printfn $"toggled {c.Active}"
-  check.add_OnToggled (GObject.SignalHandler<CheckButton> onToggled)
+  //check.add_OnToggled (GObject.SignalHandler<CheckButton> onToggled)
   check
 
 let boolSetting text =
@@ -123,6 +123,7 @@ let boolSetting text =
   box.SetOrientation Orientation.Horizontal
   settingLabel text |> box.Append
   settingCheckBox () |> box.Append
+
   box
 
 let settingGroup g =
@@ -164,6 +165,7 @@ let populateListBox (l: ListBox) (xs: Tree<ConfRoot, Setting> array) =
     | Float -> boolSetting proto.name |> l.Append
 
   let appendNode r = r |> settingGroup |> l.Append
+  l.RemoveAll()
 
   xs
   |> Array.iter (function

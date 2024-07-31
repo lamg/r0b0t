@@ -34,7 +34,7 @@ let dalle3 = "dall-e-3"
 [<Literal>]
 let gpt4oMini = "gpt-4o-mini"
 
-let openAIModels = [ dalle3; "gpt-4o"; gpt4oMini ]
+let openAIModels = [ gpt4oMini; dalle3; "gpt-4o" ]
 let githubModels = [ "copilot" ]
 let huggingFaceModels = [ "gpt2" ]
 
@@ -52,7 +52,6 @@ type Request =
   | Completion of Prompt
   | Imagine of Prompt
 
-
 type Configuration =
   { model: Model
     provider: Provider
@@ -69,6 +68,8 @@ type DataConsumer =
 type ConfigurationManager =
   abstract member storeConfiguration: Configuration -> unit
   abstract member loadConfiguration: unit -> Configuration
+  abstract member setConfiguration: Configuration -> unit
+  abstract member getConfiguration: unit -> Configuration
 
 type CompletionStreamer =
   abstract member streamCompletion: Provider -> Key -> Model -> Prompt -> AsyncSeq<LlmData>
@@ -80,8 +81,22 @@ type StreamEnv =
   inherit ConfigurationManager
   inherit CompletionStreamer
 
+let setProvider (p: Provider) (conf: Configuration) =
+  let xs =
+    [ OpenAI, openAIModels
+      Anthropic, anthropicModels
+      GitHub, githubModels
+      HuggingFace, huggingFaceModels ]
+
+  let model = xs |> List.find (fun (x, _) -> x = p) |> snd |> List.head |> Model
+  printfn $"set provider {p} with model {model}"
+
+  { conf with
+      provider = p
+      model = model }
+
 let requestProcessor (env: StreamEnv) (r: Request) =
-  let conf = env.loadConfiguration ()
+  let conf = env.getConfiguration ()
 
   let stream provider model prompt =
     let comp =
@@ -99,10 +114,13 @@ let requestProcessor (env: StreamEnv) (r: Request) =
 
   match r with
   | SetModel m ->
-    env.storeConfiguration
-      { conf with
-          model = Model(m.ToString()) }
-  | SetProvider p -> env.storeConfiguration { conf with provider = p }
+    let c = { conf with model = m }
+    c |> env.storeConfiguration
+    c |> env.setConfiguration
+  | SetProvider p ->
+    let c = conf |> setProvider p
+    c |> env.storeConfiguration
+    c |> env.setConfiguration
   | Completion prompt -> stream conf.provider conf.model prompt
   | SetApiKey(provider, s) ->
     env.storeConfiguration
@@ -111,5 +129,5 @@ let requestProcessor (env: StreamEnv) (r: Request) =
   | Imagine prompt -> stream OpenAI (Model dalle3) prompt
 
 let plugLogicToEnv (env: StreamEnv) =
-  env.loadConfiguration () |> env.storeConfiguration
+  env.loadConfiguration () |> env.setConfiguration
   env.event.Add(requestProcessor env)
