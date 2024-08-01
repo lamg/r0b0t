@@ -43,6 +43,12 @@ let anthropicModels =
     "claude-3-haiku-20240307"
     "claude-3-opus-20240229" ]
 
+let providersModels =
+  [ OpenAI, openAIModels
+    Anthropic, anthropicModels
+    GitHub, githubModels
+    HuggingFace, huggingFaceModels ]
+
 type ApiKey = string
 
 type Request =
@@ -61,13 +67,13 @@ type RequestProvider =
   abstract member event: IEvent<Request>
 
 type DataConsumer =
-  abstract member consume: LlmData -> unit
+  abstract member consume: LlmData -> Async<unit>
   abstract member consumptionEnd: unit -> unit
   abstract member consumeException: exn -> unit
 
 type ConfigurationManager =
-  abstract member storeConfiguration: Configuration -> unit
-  abstract member loadConfiguration: unit -> Configuration
+  abstract member storeConfiguration: unit -> unit
+  abstract member loadConfiguration: unit -> unit
   abstract member setConfiguration: Configuration -> unit
   abstract member getConfiguration: unit -> Configuration
 
@@ -82,14 +88,8 @@ type StreamEnv =
   inherit CompletionStreamer
 
 let setProvider (p: Provider) (conf: Configuration) =
-  let xs =
-    [ OpenAI, openAIModels
-      Anthropic, anthropicModels
-      GitHub, githubModels
-      HuggingFace, huggingFaceModels ]
-
-  let model = xs |> List.find (fun (x, _) -> x = p) |> snd |> List.head |> Model
-  printfn $"set provider {p} with model {model}"
+  let model =
+    providersModels |> List.find (fun (x, _) -> x = p) |> snd |> List.head |> Model
 
   { conf with
       provider = p
@@ -103,7 +103,7 @@ let requestProcessor (env: StreamEnv) (r: Request) =
       match Map.tryFind provider conf.keys with
       | Some key -> env.streamCompletion provider key model prompt
       | None -> [ Word $"key not found for {conf.provider}" ] |> AsyncSeq.ofSeq
-      |> AsyncSeq.iter env.consume
+      |> AsyncSeq.iterAsync env.consume
 
     Async.StartWithContinuations(
       computation = comp,
@@ -115,19 +115,23 @@ let requestProcessor (env: StreamEnv) (r: Request) =
   match r with
   | SetModel m ->
     let c = { conf with model = m }
-    c |> env.storeConfiguration
     c |> env.setConfiguration
+    env.storeConfiguration ()
+
   | SetProvider p ->
-    let c = conf |> setProvider p
-    c |> env.storeConfiguration
-    c |> env.setConfiguration
+    conf |> setProvider p |> env.setConfiguration
+    env.storeConfiguration ()
+
   | Completion prompt -> stream conf.provider conf.model prompt
   | SetApiKey(provider, s) ->
-    env.storeConfiguration
+    env.setConfiguration
       { conf with
           keys = Map.add provider (Key s) conf.keys }
+
+    env.storeConfiguration ()
   | Imagine prompt -> stream OpenAI (Model dalle3) prompt
 
 let plugLogicToEnv (env: StreamEnv) =
-  env.loadConfiguration () |> env.setConfiguration
+  env.loadConfiguration ()
+  env.getConfiguration () |> env.setConfiguration
   env.event.Add(requestProcessor env)
