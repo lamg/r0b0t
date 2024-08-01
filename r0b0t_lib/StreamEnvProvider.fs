@@ -2,9 +2,13 @@ module r0b0tLib.StreamEnvProvider
 
 open System
 open FSharp.Control
+
 open Gtk
 open Gdk
 open GdkPixbuf
+
+open SixLabors.ImageSharp
+open SixLabors.ImageSharp.Formats.Png.Chunks
 
 open Core
 open Controls
@@ -14,6 +18,27 @@ type SerializableConf =
   { provider_keys: Map<string, string>
     model: string
     provider: string }
+
+let controlEnter = ModifierType.ControlMask, 36ul
+let controlP = ModifierType.ControlMask, 27ul
+let escape = ModifierType.NoModifierMask, 9ul
+let backspace = ModifierType.NoModifierMask, 22ul
+let downArrow = ModifierType.NoModifierMask, 116ul
+
+[<Literal>]
+let promptPngMetadataKey = "prompt"
+
+[<Literal>]
+let revisedPromptPngMetadataKey = "revised_prompt"
+
+let saveImage (d: PngData) =
+  use image = Image.Load d.image
+  let pngMeta = image.Metadata.GetPngMetadata()
+  pngMeta.TextData.Add(PngTextData(promptPngMetadataKey, d.prompt, "en", promptPngMetadataKey))
+  pngMeta.TextData.Add(PngTextData(revisedPromptPngMetadataKey, d.revisedPrompt, "en", revisedPromptPngMetadataKey))
+  let now = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH-mm-ss")
+  let outputPath = $"img_{now}.png"
+  image.Save(outputPath)
 
 type StreamEnvProvider(controls: Controls) =
   let eventSource = Event<Request>()
@@ -42,37 +67,31 @@ type StreamEnvProvider(controls: Controls) =
       let check = box.GetLastChild() :?> CheckButton
       check.Active <- v
 
-    let switchOffCheckButtons () =
+    let switchOffCheckButtons butIndex =
       for i in 0 .. items.Length - 1 do
         match items[i] with
-        | Leaf({ inputType = Bool }, _) -> lb.GetRowAtIndex i |> setBoolRow false
+        | Leaf({ inputType = Bool _ }, _) -> lb.GetRowAtIndex i |> setBoolRow (i = butIndex)
         | _ -> ()
-
-    // let current = e.Row.GetIndex() |> uint |> controls.navigationHandler.moveToChild
 
     match current with
     | Leaf(prototype, cmd) ->
-      // trigger event with command
       eventSource.Trigger cmd
 
       match prototype with
-      | { inputType = Bool } ->
-        switchOffCheckButtons ()
-        setBoolRow true e.Row
+      | { inputType = Bool _ } -> switchOffCheckButtons index
       | _ -> ()
-    //controls.navigationHandler.backToRoot ()
-
     | Node { value = _; children = xs } ->
       index |> uint |> controls.navigationHandler.moveToChild
       populateListBox lb xs
 
   let onCtrlEnterSendPrompt (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
-    match e.State, e.Keycode with
-    | ModifierType.ControlMask, 36ul ->
-      // control + enter
+    let keys = e.State, e.Keycode
+
+    match keys with
+    | _ when keys = controlEnter ->
       controls.leftSrc.Buffer.Text <- ""
       controls.rightSrc.Buffer.Text |> Prompt |> Completion |> eventSource.Trigger
-    | ModifierType.ControlMask, 27ul ->
+    | _ when keys = controlP ->
       // control + p
       controls.rightSrc.Hide()
       controls.confBox.Show()
@@ -80,18 +99,21 @@ type StreamEnvProvider(controls: Controls) =
     | _ -> ()
 
   let onEscHideConfBox (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
-    match e.State, e.Keycode with
-    | ModifierType.NoModifierMask, 9ul ->
-      // escape
+    let keys = e.State, e.Keycode
+
+    match keys with
+    | _ when keys = escape ->
       controls.confBox.Hide()
       controls.rightSrc.Show()
       controls.rightSrc.GrabFocus() |> ignore
-    | ModifierType.ControlMask, 27ul -> controls.searchConf.GrabFocus() |> ignore
-    | _ -> ()
+    | _ when keys = controlP -> controls.searchConf.GrabFocus() |> ignore
+    | _ when keys = backspace ->
+      controls.navigationHandler.backToRoot ()
 
-  let updateControls () =
-    conf.provider.ToString() |> controls.providerLabel.SetText
-    conf.model.ToString() |> controls.modelLabel.SetText
+      controls.navigationHandler.getCurrentItems ()
+      |> populateListBox controls.listBox
+    | _ when keys = downArrow && controls.searchConf.HasFocus -> controls.listBox.GetFirstChild().GrabFocus() |> ignore
+    | _ -> ()
 
   let confPath =
     (LamgEnv.getEnv "HOME" |> Option.defaultValue "~")
@@ -124,45 +146,61 @@ type StreamEnvProvider(controls: Controls) =
     )
 
     controls.confBox.AddController escController
-
-    updateControls ()
+    controls.listBox.AddController escController
 
   member _.TriggerEvent(request: Request) = eventSource.Trigger(request)
 
   member _.event = eventSource.Publish
 
   member _.consume(d: LlmData) =
+    async {
+      GLib.Functions.IdleAdd(
+        int GLib.ThreadPriority.Normal,
+        fun _ ->
+          match d with
+          | Word w ->
+            if not controls.leftSrc.Visible then
+              controls.leftSrc.Show()
+              controls.picture.Hide()
+
+            controls.leftSrc.Buffer.Text <- $"{controls.leftSrc.Buffer.Text}{w}"
+          | PngData img ->
+            if not controls.picture.Visible then
+
+              controls.leftSrc.Hide()
+              controls.picture.Show()
+
+            let p = PixbufLoader.FromBytes img.image
+            controls.picture.SetPixbuf p
+            saveImage img
+
+          false
+      )
+      |> ignore
+    }
+
+  member this.consumptionEnd() =
     GLib.Functions.IdleAdd(
       int GLib.ThreadPriority.Urgent,
       fun _ ->
-        match d with
-        | Word w ->
-          if not controls.leftSrc.Visible then
-            controls.leftSrc.Show()
-            controls.picture.Hide()
-
-          controls.leftSrc.Buffer.Text <- $"{controls.leftSrc.Buffer.Text}{w}"
-        | PngData img ->
-          if not controls.picture.Visible then
-
-            controls.leftSrc.Hide()
-            controls.picture.Show()
-
-          let p = PixbufLoader.FromBytes img.image
-          controls.picture.SetPixbuf p
-
+        controls.spinner.Stop()
         false
     )
     |> ignore
 
-  member _.consumptionEnd() = controls.spinner.Stop()
-
-  member _.consumeException(e: exn) =
+  member this.consumeException(e: exn) =
     match e with
     | :? ArgumentException when e.Message.Contains "The input sequence was empty" -> ()
-    | _ -> printfn $"{e.GetType().ToString()} msg = {e.Message}"
+    | _ ->
+      GLib.Functions.IdleAdd(
+        int GLib.ThreadPriority.Urgent,
+        fun _ ->
+          controls.leftSrc.Buffer.Text <- $"{e.GetType().ToString()} msg = {e.Message}"
+          false
+      )
+      |> ignore
 
-    controls.spinner.Stop()
+    this.consumptionEnd ()
 
   member this.loadConfiguration() =
     if System.IO.File.Exists confPath then
@@ -182,21 +220,15 @@ type StreamEnvProvider(controls: Controls) =
               with _ ->
                 Map.empty // a hack to handle the null map, which cannot be handled with Option.ofObj
 
-            let providers =
-              [ OpenAI, openAIModels
-                GitHub, githubModels
-                HuggingFace, huggingFaceModels
-                Anthropic, anthropicModels ]
-
             let keys =
-              providers
+              providersModels
               |> List.choose (fun (p, _) ->
                 match Map.tryFind (p.ToString()) pks with
                 | Some key -> Some(p, Key key)
                 | None -> None)
               |> Map.ofList
 
-            providers
+            providersModels
             |> List.tryFind (fun (p, _) -> p.ToString() = provider)
             |> function
               | Some(p, models) when models |> List.exists (fun x -> x = model) ->
@@ -211,11 +243,9 @@ type StreamEnvProvider(controls: Controls) =
       with e ->
         eprintfn $"failed to load configuration: {e.Message}"
     else
-      this.storeConfiguration conf
+      this.storeConfiguration ()
 
-    conf
-
-  member this.storeConfiguration c =
+  member this.storeConfiguration() =
     try
       let (Model model) = conf.model
       let provider = conf.provider.ToString()
@@ -240,10 +270,27 @@ type StreamEnvProvider(controls: Controls) =
 
   member _.setConfiguration c =
     conf <- c
-    updateControls ()
+
+    modelsForProvider c.provider
+    |> controls.navigationHandler.replaceChildren (fun cr -> cr.name = setModelName)
+
+    controls.navigationHandler.activateLeafs
+      [ conf.provider.ToString()
+        conf.model
+        |> function
+          | Model m -> m ]
+
+    conf.provider.ToString() |> controls.providerLabel.SetText
+    conf.model.ToString() |> controls.modelLabel.SetText
 
   member _.streamCompletion provider key model prompt =
-    controls.spinner.Start()
+    GLib.Functions.IdleAdd(
+      int GLib.ThreadPriority.Urgent,
+      fun _ ->
+        controls.spinner.Start()
+        false
+    )
+    |> ignore
 
     match provider with
     | OpenAI when model = Model dalle3 ->
@@ -259,7 +306,7 @@ let newStreamEnv (c: Controls) =
 
   { new StreamEnv with
       member _.event = m.event
-      member _.storeConfiguration c = m.storeConfiguration c
+      member _.storeConfiguration() = m.storeConfiguration ()
       member _.loadConfiguration() = m.loadConfiguration ()
       member _.getConfiguration() = m.getConfiguration ()
       member _.setConfiguration c = m.setConfiguration c
