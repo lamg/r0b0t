@@ -13,11 +13,11 @@ and Tree<'a, 'b> =
   | Leaf of 'b
 
 type InputType =
-  | Bool
-  | String
-  | Natural
-  | Integer
-  | Float
+  | Bool of bool
+  | String of string
+  | Natural of uint
+  | Integer of int
+  | Float of float
 
 type GuiControlPrototype = { inputType: InputType; name: string }
 type ConfRoot = { name: string; description: string }
@@ -35,27 +35,90 @@ let childrenAt tree (path: uint list) =
     | Node n -> n.children
     | x -> [| x |]
 
+let rec replaceChildren tree pred children =
+  match tree with
+  | Node { value = v } when pred v -> Node { value = v; children = children }
+  | Node { value = v; children = xs } ->
+    Node
+      { value = v
+        children = xs |> Array.map (fun x -> replaceChildren x pred children) }
+  | _ -> tree
+
+let rec mapLeafs tree f =
+  match tree with
+  | Node v ->
+    Node
+      { v with
+          children = v.children |> Array.map (fun x -> mapLeafs x f) }
+  | Leaf v -> Leaf(f v)
+
 let setProviderTree =
   Node
     { value =
         { name = "Set provider"
           description = "Set which LLM service will handle the requests" }
       children =
-        [| Leaf({ name = "OpenAI"; inputType = Bool }, SetProvider OpenAI)
-           Leaf({ name = "Anthropic"; inputType = Bool }, SetProvider Anthropic)
-           Leaf({ name = "GitHub"; inputType = Bool }, SetProvider GitHub)
+        [| Leaf(
+             { name = "OpenAI"
+               inputType = Bool false },
+             SetProvider OpenAI
+           )
+           Leaf(
+             { name = "Anthropic"
+               inputType = Bool false },
+             SetProvider Anthropic
+           )
+           Leaf(
+             { name = "GitHub"
+               inputType = Bool false },
+             SetProvider GitHub
+           )
            Leaf(
              { name = "HuggingFace"
-               inputType = Bool },
+               inputType = Bool false },
              SetProvider HuggingFace
            ) |] }
+
+[<Literal>]
+let setModelName = "Set model"
+
+let createModelChildren (xs: string list) =
+  xs
+  |> List.map (fun m -> Leaf({ name = m; inputType = Bool false }, SetModel(Model m)))
+  |> List.toArray
 
 let setModelTree =
   Node
     { value =
-        { name = "Set model"
-          description = "Set which specific LLM will handle requestes in the selected provider" }
+        { name = setModelName
+          description = "Set which specific LLM will handle requests in the selected provider" }
       children = [||] }
+
+let setProviderModels models =
+  models
+  |> List.map (fun x -> Leaf({ name = x; inputType = Bool false }, SetModel(Model x)))
+  |> List.toArray
+
+let setOpenAIModels: Tree<ConfRoot, Setting> array =
+  openAIModels |> setProviderModels
+
+let setAnthropicModels: Tree<ConfRoot, Setting> array =
+  anthropicModels |> setProviderModels
+
+let setHuggingFaceModels: Tree<ConfRoot, Setting> array =
+  huggingFaceModels |> setProviderModels
+
+let setGithubModels: Tree<ConfRoot, Setting> array =
+  githubModels |> setProviderModels
+
+let modelsForProvider p =
+  let xs =
+    [ OpenAI, setOpenAIModels
+      Anthropic, setAnthropicModels
+      HuggingFace, setHuggingFaceModels
+      GitHub, setGithubModels ]
+
+  xs |> List.find (fun (x, _) -> x = p) |> snd
 
 let setApiKeyTree =
   Node
@@ -78,7 +141,7 @@ let root =
       children = [| setProviderTree; setModelTree; setApiKeyTree; setFont |] }
 
 type NavigationHandler() =
-  let tree = root
+  let mutable tree = root
 
   let mutable currentLevelPath = []
   let mutable currentFilteredPaths = []
@@ -96,10 +159,21 @@ type NavigationHandler() =
         let lowerDescription = v.description.ToLower()
         lowerName.Contains lowerText || lowerDescription.Contains lowerText)
 
+  member _.replaceChildren pred xs = tree <- replaceChildren tree pred xs
+
   member _.moveToChild index =
     currentLevelPath <- index :: currentLevelPath
 
   member _.backToRoot() = currentLevelPath <- []
+
+  member _.activateLeafs xs =
+    tree <-
+      mapLeafs tree (function
+        | { name = name; inputType = Bool b } as x, y ->
+          ({ x with
+              inputType = Bool(List.contains name xs) },
+           y)
+        | r -> r)
 
 let settingLabel (text: string) =
   let l = new Label()
@@ -113,16 +187,13 @@ let settingLabel (text: string) =
   l.AddCssClass "setting-label"
   l
 
-let settingCheckBox () =
-  let check = new CheckButton()
-  //check.add_OnToggled (GObject.SignalHandler<CheckButton> onToggled)
-  check
-
-let boolSetting text =
+let boolSetting text value =
   let box = new Box()
   box.SetOrientation Orientation.Horizontal
   settingLabel text |> box.Append
-  settingCheckBox () |> box.Append
+  let check = new CheckButton()
+  check.Active <- value
+  check |> box.Append
 
   box
 
@@ -158,11 +229,11 @@ let settingGroup g =
 let populateListBox (l: ListBox) (xs: Tree<ConfRoot, Setting> array) =
   let appendLeaf (proto, cmd) =
     match proto.inputType with
-    | Bool -> boolSetting proto.name |> l.Append
-    | String -> boolSetting proto.name |> l.Append
-    | Natural -> boolSetting proto.name |> l.Append
-    | Integer -> boolSetting proto.name |> l.Append
-    | Float -> boolSetting proto.name |> l.Append
+    | Bool v -> boolSetting proto.name v |> l.Append
+    | String _ -> boolSetting proto.name false |> l.Append
+    | Natural _ -> boolSetting proto.name false |> l.Append
+    | Integer _ -> boolSetting proto.name false |> l.Append
+    | Float _ -> boolSetting proto.name false |> l.Append
 
   let appendNode r = r |> settingGroup |> l.Append
   l.RemoveAll()
