@@ -50,7 +50,8 @@ let providersModels =
   [ OpenAI, openAIModels
     Anthropic, anthropicModels
     GitHub, githubModels
-    HuggingFace, huggingFaceModels ]
+    HuggingFace, huggingFaceModels
+    ImaginePro, imagineProAiModels ]
 
 type ApiKey = string
 
