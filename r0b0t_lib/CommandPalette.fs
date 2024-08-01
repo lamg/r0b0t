@@ -77,7 +77,13 @@ let setProviderTree =
              { name = "HuggingFace"
                inputType = Bool false },
              SetProvider HuggingFace
+           )
+           Leaf(
+             { name = "ImaginePro"
+               inputType = Bool false },
+             SetProvider ImaginePro
            ) |] }
+
 
 [<Literal>]
 let setModelName = "Set model"
@@ -111,12 +117,16 @@ let setHuggingFaceModels: Tree<ConfRoot, Setting> array =
 let setGithubModels: Tree<ConfRoot, Setting> array =
   githubModels |> setProviderModels
 
+let setImagineProModels: Tree<ConfRoot, Setting> array =
+  imagineProAiModels |> setProviderModels
+
 let modelsForProvider p =
   let xs =
     [ OpenAI, setOpenAIModels
       Anthropic, setAnthropicModels
       HuggingFace, setHuggingFaceModels
-      GitHub, setGithubModels ]
+      GitHub, setGithubModels
+      ImaginePro, setImagineProModels ]
 
   xs |> List.find (fun (x, _) -> x = p) |> snd
 

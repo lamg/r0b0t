@@ -27,6 +27,7 @@ type Provider =
   | GitHub
   | HuggingFace
   | Anthropic
+  | ImaginePro
 
 [<Literal>]
 let dalle3 = "dall-e-3"
@@ -37,6 +38,8 @@ let gpt4oMini = "gpt-4o-mini"
 let openAIModels = [ gpt4oMini; dalle3; "gpt-4o" ]
 let githubModels = [ "copilot" ]
 let huggingFaceModels = [ "gpt2" ]
+
+let imagineProAiModels = [ "midjourney" ]
 
 let anthropicModels =
   [ "claude-3-5-sonnet-20240620"

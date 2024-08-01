@@ -300,6 +300,7 @@ type StreamEnvProvider(controls: Controls) =
     | GitHub -> failwith "todo"
     | HuggingFace -> failwith "todo"
     | Anthropic -> failwith "todo"
+    | ImaginePro -> failwith "todo"
 
 let newStreamEnv (c: Controls) =
   let m = StreamEnvProvider c
