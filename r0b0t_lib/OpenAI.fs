@@ -17,13 +17,17 @@ let imagine (Key key) (Prompt p) =
       ResponseFormat = GeneratedImageFormat.Bytes
     )
 
-  let png = client.GenerateImage(p, opts)
+  [ async {
+      let! png = client.GenerateImageAsync(p, opts) |> Async.AwaitTask
 
-  [ PngData
-      { image = png.Value.ImageBytes.ToArray()
-        prompt = p
-        revisedPrompt = png.Value.RevisedPrompt } ]
-  |> AsyncSeq.ofSeq
+      return
+        PngData
+          { image = png.Value.ImageBytes.ToArray()
+            prompt = p
+            revisedPrompt = png.Value.RevisedPrompt }
+    } ]
+  |> AsyncSeq.ofSeqAsync
+
 
 let complete (Key key) (Model m) (Prompt p) =
   let client = ChatClient(m, key, null)
