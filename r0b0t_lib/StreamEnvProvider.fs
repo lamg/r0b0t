@@ -297,7 +297,7 @@ type StreamEnvProvider(controls: Controls) =
       // TODO show to the user a timer with the timeout as upper limit
       OpenAI.imagine key prompt
     | OpenAI -> OpenAI.complete key model prompt
-    | GitHub -> failwith "todo"
+    | GitHub -> Github.ask key prompt
     | HuggingFace -> failwith "todo"
     | Anthropic -> failwith "todo"
     | ImaginePro -> failwith "todo"
