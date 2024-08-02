@@ -50,7 +50,8 @@ type StreamEnvProvider(controls: Controls) =
         [ OpenAI, "openai_key"
           Anthropic, "anthropic_key"
           HuggingFace, "huggingface_key"
-          GitHub, "github_key" ]
+          GitHub, "github_key"
+          ImaginePro, "imaginepro_key" ]
         |> List.choose (fun (p, var) ->
           match LamgEnv.getEnv var with
           | Some k -> Some(p, Key k)
@@ -298,7 +299,7 @@ type StreamEnvProvider(controls: Controls) =
     | GitHub -> Github.ask key prompt
     | HuggingFace -> HuggingFace.ask key model prompt
     | Anthropic -> Anthropic.ask key model prompt
-    | ImaginePro -> failwith "todo"
+    | ImaginePro -> ImaginePro.imagine key prompt
 
 let newStreamEnv (c: Controls) =
   let m = StreamEnvProvider c
