@@ -296,7 +296,7 @@ type StreamEnvProvider(controls: Controls) =
       OpenAI.imagine key prompt
     | OpenAI -> OpenAI.complete key model prompt
     | GitHub -> Github.ask key prompt
-    | HuggingFace -> failwith "todo"
+    | HuggingFace -> HuggingFace.ask key model prompt
     | Anthropic -> Anthropic.ask key model prompt
     | ImaginePro -> failwith "todo"
 
