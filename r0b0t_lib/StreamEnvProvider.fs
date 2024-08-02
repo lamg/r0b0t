@@ -3,9 +3,9 @@ module r0b0tLib.StreamEnvProvider
 open System
 open FSharp.Control
 
+open GdkPixbuf
 open Gtk
 open Gdk
-open GdkPixbuf
 
 open SixLabors.ImageSharp
 open SixLabors.ImageSharp.Formats.Png.Chunks
@@ -146,42 +146,40 @@ type StreamEnvProvider(controls: Controls) =
     )
 
     controls.confBox.AddController escController
-    controls.listBox.AddController escController
+  //controls.listBox.AddController escController
 
   member _.TriggerEvent(request: Request) = eventSource.Trigger(request)
 
   member _.event = eventSource.Publish
 
   member _.consume(d: LlmData) =
-    async {
-      GLib.Functions.IdleAdd(
-        int GLib.ThreadPriority.Normal,
-        fun _ ->
-          match d with
-          | Word w ->
-            if not controls.leftSrc.Visible then
-              controls.leftSrc.Show()
-              controls.picture.Hide()
+    GLib.Functions.IdleAdd(
+      int GLib.ThreadPriority.Normal,
+      fun _ ->
+        match d with
+        | Word w ->
+          if not controls.leftSrc.Visible then
+            controls.leftSrc.Show()
+            controls.picture.Hide()
 
-            controls.leftSrc.Buffer.Text <- $"{controls.leftSrc.Buffer.Text}{w}"
-          | PngData img ->
-            if not controls.picture.Visible then
+          controls.leftSrc.Buffer.Text <- $"{controls.leftSrc.Buffer.Text}{w}"
+        | PngData img ->
+          if not controls.picture.Visible then
 
-              controls.leftSrc.Hide()
-              controls.picture.Show()
+            controls.leftSrc.Hide()
+            controls.picture.Show()
 
             let p = PixbufLoader.FromBytes img.image
             controls.picture.SetPixbuf p
             saveImage img
 
-          false
-      )
-      |> ignore
-    }
+        false
+    )
+    |> ignore
 
   member this.consumptionEnd() =
     GLib.Functions.IdleAdd(
-      int GLib.ThreadPriority.Urgent,
+      int GLib.ThreadPriority.Normal,
       fun _ ->
         controls.spinner.Stop()
         false
@@ -193,7 +191,7 @@ type StreamEnvProvider(controls: Controls) =
     | :? ArgumentException when e.Message.Contains "The input sequence was empty" -> ()
     | _ ->
       GLib.Functions.IdleAdd(
-        int GLib.ThreadPriority.Urgent,
+        int GLib.ThreadPriority.Normal,
         fun _ ->
           controls.leftSrc.Buffer.Text <- $"{e.GetType().ToString()} msg = {e.Message}"
           false
@@ -285,7 +283,7 @@ type StreamEnvProvider(controls: Controls) =
 
   member _.streamCompletion provider key model prompt =
     GLib.Functions.IdleAdd(
-      int GLib.ThreadPriority.Urgent,
+      int GLib.ThreadPriority.Normal,
       fun _ ->
         controls.spinner.Start()
         false
@@ -299,7 +297,7 @@ type StreamEnvProvider(controls: Controls) =
     | OpenAI -> OpenAI.complete key model prompt
     | GitHub -> Github.ask key prompt
     | HuggingFace -> failwith "todo"
-    | Anthropic -> failwith "todo"
+    | Anthropic -> Anthropic.ask key model prompt
     | ImaginePro -> failwith "todo"
 
 let newStreamEnv (c: Controls) =

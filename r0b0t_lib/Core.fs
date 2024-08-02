@@ -71,7 +71,7 @@ type RequestProvider =
   abstract member event: IEvent<Request>
 
 type DataConsumer =
-  abstract member consume: LlmData -> Async<unit>
+  abstract member consume: LlmData -> unit
   abstract member consumptionEnd: unit -> unit
   abstract member consumeException: exn -> unit
 
@@ -107,7 +107,7 @@ let requestProcessor (env: StreamEnv) (r: Request) =
       match Map.tryFind provider conf.keys with
       | Some key -> env.streamCompletion provider key model prompt
       | None -> [ Word $"key not found for {conf.provider}" ] |> AsyncSeq.ofSeq
-      |> AsyncSeq.iterAsync env.consume
+      |> AsyncSeq.iter env.consume
 
     Async.StartWithContinuations(
       computation = comp,
@@ -126,7 +126,9 @@ let requestProcessor (env: StreamEnv) (r: Request) =
     conf |> setProvider p |> env.setConfiguration
     env.storeConfiguration ()
 
-  | Completion prompt -> stream conf.provider conf.model prompt
+  | Completion prompt ->
+    // TODO ignore request while we are already consuming an answer
+    stream conf.provider conf.model prompt
   | SetApiKey(provider, s) ->
     env.setConfiguration
       { conf with

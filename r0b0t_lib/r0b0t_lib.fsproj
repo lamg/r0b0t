@@ -1,30 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <RootNamespace>r0b0tLib</RootNamespace>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>r0b0tLib</RootNamespace>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <Compile Include="Core.fs" />
-        <Compile Include="OpenAI.fs" />
-        <Compile Include="Github.fs" />
-        <Compile Include="Anthropic.fs" />
-        <Compile Include="HuggingFace.fs" />
-        <Compile Include="ImaginePro.fs" />
-        <Compile Include="CommandPalette.fs" />
-        <Compile Include="Controls.fs" />
-        <Compile Include="StreamEnvProvider.fs" />
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Core.fs"/>
+    <Compile Include="OpenAI.fs"/>
+    <Compile Include="Github.fs"/>
+    <Compile Include="ServerSentEvents.fs"/>
+    <Compile Include="Anthropic.fs"/>
+    <Compile Include="HuggingFace.fs"/>
+    <Compile Include="ImaginePro.fs"/>
+    <Compile Include="CommandPalette.fs"/>
+    <Compile Include="Controls.fs"/>
+    <Compile Include="StreamEnvProvider.fs"/>
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="FsHttp" Version="14.5.0" />
-        <PackageReference Include="GirCore.GtkSource-5" Version="0.5.0" />
-        <PackageReference Include="GirCore.Gtk-4.0" Version="0.5.0" />
-        <PackageReference Include="LamgEnv" Version="0.0.2" />
-        <PackageReference Include="OpenAI" Version="2.0.0-beta.7" />
-        <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FsHttp" Version="14.5.0"/>
+    <PackageReference Include="GirCore.GtkSource-5" Version="0.5.0"/>
+    <PackageReference Include="GirCore.Gtk-4.0" Version="0.5.0"/>
+    <PackageReference Include="LamgEnv" Version="0.0.2"/>
+    <PackageReference Include="OpenAI" Version="2.0.0-beta.7"/>
+    <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1"/>
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5"/>
+  </ItemGroup>
 </Project>
