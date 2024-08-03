@@ -4,7 +4,7 @@ event ctrl_enter: the user presses the Control + Enter key combination.
 
 event answer_stream: the left panel shows a stream of characters coming from the API serving the configured language model.
 
-event answer_picture: the left panel shows an image resulting of sending a prompt to an API serving the configured image generation model.
+event answer_picture: the left panel shows an image resulting of sending a prompt to an API serving the configured image generation model. On top of the left panel a progres bar appears showing the image generation progress, or instead a label showing the elapsed time before stop waiting for the image.
 
 event ctrl_p: the the user presses the Control + p key combination.
 
@@ -18,9 +18,7 @@ event select_command: the user writes a text to filter a list of items by name o
 
 event set_api_key: the user presses enter on the _Set API key_ item.
 
-event choose_provider: the user chooses an item in the list, representing a provider.
-
-event introduce_api_key: the user writes an API key.
+event introduce_api_key: the user writes an API key for the current provider.
 
 event set_provider: the user presses enter on the _Set provider_ item.
 
@@ -52,13 +50,19 @@ event crash: represents a failure of the R0B0T implementation to follow the spec
 }
 
 EXEC_COMMAND =
-  set_api_key → choose_provider → introduce_api_key → R0B0T
+  set_api_key → introduce_api_key → R0B0T
   | set_provider → choose_provider → R0B0T
   | set_model → choose_model → R0B0T
   | set_image_parameters → (
     set_size → CMD_PALETTE
     set_style → CMD_PALETTE
   )
+  | set_image_path → R0B0T
+  | set_bulk_image_generation_amount → R0B0T
+  | introduce_system_prompt → R0B0T
+  | set_wallet_address → R0B0T
+  | set_current_blockchain → R0B0T
+
 
 CMD_PALETTE =
   esc → show_prompt_input → R0B0T
@@ -70,5 +74,6 @@ R0B0T =
     show_prompt_input → introduce_prompt → ctrl_enter → (
       answer_stream → X
       | answer_picture → X
+      | ctrl_q → cancel_generation → X
     )
     | ctrl_p → show_command_palette → CMD_PALETTE
