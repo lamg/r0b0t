@@ -1,4 +1,4 @@
-module r0b0tLib.Github
+module Github
 
 open System
 open System.IO

@@ -1,7 +1,7 @@
-module r0b0tLib.Controls
+module Controls
 
 open Gtk
-open r0b0tLib.CommandPalette
+open CommandPalette
 
 type Controls =
   { leftSrc: GtkSource.View

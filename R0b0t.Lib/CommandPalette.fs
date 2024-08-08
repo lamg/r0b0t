@@ -1,4 +1,4 @@
-module r0b0tLib.CommandPalette
+module CommandPalette
 
 open System
 open Gtk

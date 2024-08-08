@@ -1,4 +1,4 @@
-module r0b0tLib.ServerSentEvents
+module ServerSentEvents
 
 open System.Threading
 open System.Threading.Tasks

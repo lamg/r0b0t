@@ -13,12 +13,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: publish r0b0t
+      - name: publish r0b0t tool
         run: |
           dotnet restore
           dotnet publish -c Release
           dotnet pack
           dotnet nuget push nupkg/*.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
-        working-directory: ./Main
+        working-directory: ./r0b0t
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+      - name: publish r0b0t library
+        run: |
+          dotnet restore
+          dotnet publish -c Release
+          dotnet pack
+          dotnet nuget push nupkg/*.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
+        working-directory: ./R0b0t.Lib
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

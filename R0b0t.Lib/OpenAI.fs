@@ -1,4 +1,4 @@
-﻿module r0b0tLib.OpenAI
+﻿module OpenAI
 
 open FSharp.Control
 open OpenAI.Chat

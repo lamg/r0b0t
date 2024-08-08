@@ -1,4 +1,4 @@
-module r0b0tLib.HuggingFace
+module HuggingFace
 
 open FsHttp
 open Core

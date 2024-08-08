@@ -1,4 +1,4 @@
-module r0b0tLib.Anthropic
+module Anthropic
 
 open FsHttp
 open ServerSentEvents

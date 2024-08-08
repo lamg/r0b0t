@@ -147,7 +147,7 @@ type StreamEnvProvider(controls: Controls) =
     )
 
     controls.confBox.AddController escController
-  //controls.listBox.AddController escController
+    controls.rightSrc.add_OnRealize (GObject.SignalHandler<Widget>(fun _ _ -> eventSource.Trigger Introduction))
 
   member _.TriggerEvent(request: Request) = eventSource.Trigger(request)
 

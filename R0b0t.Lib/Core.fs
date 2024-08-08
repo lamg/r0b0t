@@ -1,4 +1,4 @@
-module r0b0tLib.Core
+module Core
 
 open FSharp.Control
 
@@ -61,6 +61,7 @@ type Request =
   | SetApiKey of Provider * ApiKey
   | Completion of Prompt
   | Imagine of Prompt
+  | Introduction
 
 type Configuration =
   { model: Model
@@ -99,22 +100,42 @@ let setProvider (p: Provider) (conf: Configuration) =
       provider = p
       model = model }
 
+let welcomeMessage =
+  let welcome = "# 🤖 Welcome!\n"
+  let showCmdPalette = "- Press **Ctrl+p** for showing the command palette"
+
+  let navigate =
+    "- Navigate in the command palette using **Tab**, **Backspace**, **Enter**, **Arrow keys** and **Escape**"
+
+  let sendPrompt = "- Send the prompt to the Language Model using **Ctrl+Enter**\n"
+
+  [ welcome; sendPrompt; showCmdPalette; navigate ]
+  |> List.map (fun s -> $"{s}\n".Split " " |> Array.toList)
+  |> List.concat
+  |> AsyncSeq.ofSeq
+  |> AsyncSeq.mapAsync (fun w ->
+    async {
+      do! Async.Sleep 30
+      return Word $"{w} "
+    })
+
 let requestProcessor (env: StreamEnv) (r: Request) =
   let conf = env.getConfiguration ()
 
-  let stream provider model prompt =
-    let comp =
-      match Map.tryFind provider conf.keys with
-      | Some key -> env.streamCompletion provider key model prompt
-      | None -> [ Word $"key not found for {conf.provider}" ] |> AsyncSeq.ofSeq
-      |> AsyncSeq.iter env.consume
-
+  let startStream comp =
     Async.StartWithContinuations(
       computation = comp,
       continuation = env.consumptionEnd,
       exceptionContinuation = env.consumeException,
       cancellationContinuation = ignore
     )
+
+  let stream provider model prompt =
+    match Map.tryFind provider conf.keys with
+    | Some key -> env.streamCompletion provider key model prompt
+    | None -> [ Word $"key not found for {conf.provider}" ] |> AsyncSeq.ofSeq
+    |> AsyncSeq.iter env.consume
+    |> startStream
 
   match r with
   | SetModel m ->
@@ -136,6 +157,7 @@ let requestProcessor (env: StreamEnv) (r: Request) =
 
     env.storeConfiguration ()
   | Imagine prompt -> stream OpenAI (Model dalle3) prompt
+  | Introduction -> welcomeMessage |> AsyncSeq.iter env.consume |> startStream
 
 let plugLogicToEnv (env: StreamEnv) =
   env.loadConfiguration ()

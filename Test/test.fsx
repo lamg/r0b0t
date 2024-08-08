@@ -1,16 +1,12 @@
-#r "Lib/bin/Debug/net8.0/Lib.dll"
+#r "../R0b0t.Lib/bin/Debug/net8.0/R0b0t.Lib.dll"
 #r "nuget: FSharp.Control.AsyncSeq, 3.2.1"
 #r "nuget: FsHttp"
 #r "nuget: LamgEnv, 0.0.2"
 #r "nuget: dotenv.net"
 
 open FSharp.Control
-open System
 open FsHttp
-
-open FSharp.Control
-open ProviderModuleImpl.ServerSentEvents
-open Stream.Types
+open ServerSentEvents
 
 
 dotenv.net.DotEnv.Load()
@@ -55,8 +51,7 @@ let ask (key: string) (question: string) =
   // |> Response.print
   // |> printfn "%s"
   |> Response.toStream
-  |> readEvents
-  |> procEventLines
+  |> chooseEvents eventToMsg
   |> AsyncSeq.iter (function
     | Some s -> printf $"{s}"
     | _ -> ())
