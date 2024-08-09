@@ -135,7 +135,12 @@ let setApiKeyTree =
     { value =
         { name = "Set API key"
           description = "Set the API key to authorize this client to make requests to the selected provider" }
-      children = [||] }
+      children =
+        [| Leaf(
+             { name = "Set API key for current provider"
+               inputType = String "" },
+             SetApiKey(OpenAI, "")
+           ) |] }
 
 let setFont =
   Node
@@ -148,7 +153,7 @@ let setFont =
 let root =
   Node
     { value = { name = "root"; description = "root" }
-      children = [| setProviderTree; setModelTree; setApiKeyTree; setFont |] }
+      children = [| setProviderTree; setModelTree; setApiKeyTree |] }
 
 type NavigationHandler() =
   let mutable tree = root
@@ -195,6 +200,7 @@ let settingLabel (text: string) =
   l.SetWrap true
   l.SetMarginBottom 10
   l.AddCssClass "setting-label"
+  l.Focusable <- false
   l
 
 let boolSetting text value =
@@ -205,6 +211,16 @@ let boolSetting text value =
   check.Active <- value
   check |> box.Append
 
+  box
+
+let stringSetting text value =
+  let box = new Box()
+  box.SetOrientation Orientation.Horizontal
+  settingLabel text |> box.Append
+  let entry = new Entry()
+  entry.Text_ <- value
+  entry |> box.Append
+  entry.GrabFocus() |> ignore
   box
 
 let settingGroup g =
@@ -237,10 +253,10 @@ let settingGroup g =
   item
 
 let populateListBox (l: ListBox) (xs: Tree<ConfRoot, Setting> array) =
-  let appendLeaf (proto, cmd) =
+  let appendLeaf (proto, _) =
     match proto.inputType with
     | Bool v -> boolSetting proto.name v |> l.Append
-    | String _ -> boolSetting proto.name false |> l.Append
+    | String _ -> stringSetting proto.name "" |> l.Append
     | Natural _ -> boolSetting proto.name false |> l.Append
     | Integer _ -> boolSetting proto.name false |> l.Append
     | Float _ -> boolSetting proto.name false |> l.Append

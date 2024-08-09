@@ -5,7 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>R0b0t.Lib</RootNamespace>
 
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <AssemblyName>R0b0t.Lib</AssemblyName>

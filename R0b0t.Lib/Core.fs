@@ -77,6 +77,10 @@ type DataConsumer =
   abstract member consume: LlmData -> unit
   abstract member consumptionEnd: unit -> unit
   abstract member consumeException: exn -> unit
+  abstract member prepare: unit -> unit
+  abstract member isBusy: unit -> bool
+
+
 
 type ConfigurationManager =
   abstract member storeConfiguration: unit -> unit
@@ -86,7 +90,6 @@ type ConfigurationManager =
 
 type CompletionStreamer =
   abstract member streamCompletion: Provider -> Key -> Model -> LlmPrompt -> AsyncSeq<LlmData>
-  abstract member isBusy: unit -> bool
 
 type StreamEnv =
   inherit RequestProvider
@@ -132,6 +135,14 @@ let startStream (env: StreamEnv) comp =
 let keyNotFoundMessage provider =
   [ Word $"key not found for {provider}" ] |> AsyncSeq.ofSeq
 
+let setApiKeyMessage provider =
+  [ Word $"API key set for {provider}\n" ] |> AsyncSeq.ofSeq
+
+let streamMessage (env: StreamEnv) (message: AsyncSeq<LlmData>) =
+  env.prepare ()
+
+  message |> AsyncSeq.iter env.consume |> startStream env
+
 let stream (env: StreamEnv) prompt =
   let conf = env.getConfiguration ()
 
@@ -139,8 +150,7 @@ let stream (env: StreamEnv) prompt =
   | LlmPrompt prompt, Some key -> env.streamCompletion conf.provider key conf.model prompt
   | LlmPrompt _, None -> keyNotFoundMessage conf.provider
   | Introduction, _ -> welcomeMessage
-  |> AsyncSeq.iter env.consume
-  |> startStream env
+  |> streamMessage env
 
 let requestProcessor (env: StreamEnv) (r: Request) =
   let conf = env.getConfiguration ()
@@ -157,11 +167,14 @@ let requestProcessor (env: StreamEnv) (r: Request) =
 
   | Completion prompt when not (env.isBusy ()) -> stream env prompt
   | SetApiKey(provider, s) ->
+    let key = s.Trim()
+
     env.setConfiguration
       { conf with
-          keys = Map.add provider (Key s) conf.keys }
+          keys = Map.add provider (Key key) conf.keys }
 
     env.storeConfiguration ()
+    streamMessage env (setApiKeyMessage conf.provider)
   | _ -> ()
 
 let plugLogicToEnv (env: StreamEnv) =

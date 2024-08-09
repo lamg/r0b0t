@@ -74,7 +74,13 @@ type StreamEnvProvider(controls: Controls) =
         | Leaf({ inputType = Bool _ }, _) -> lb.GetRowAtIndex i |> setBoolRow (i = butIndex)
         | _ -> ()
 
+    let getEntryText () =
+      let box = lb.GetRowAtIndex 0 |> _.Child :?> Box
+      let entry = box.GetLastChild() :?> Entry
+      entry.Text_
+
     match current with
+    | Leaf(_, SetApiKey _) -> SetApiKey(conf.provider, getEntryText ()) |> eventSource.Trigger
     | Leaf(prototype, cmd) ->
       eventSource.Trigger cmd
 
@@ -90,7 +96,6 @@ type StreamEnvProvider(controls: Controls) =
 
     match keys with
     | _ when keys = controlEnter && not controls.spinner.Spinning ->
-      controls.leftSrc.Buffer.Text <- ""
       controls.rightSrc.Buffer.Text |> LlmPrompt |> Completion |> eventSource.Trigger
     | _ when keys = controlP ->
       // control + p
@@ -99,7 +104,7 @@ type StreamEnvProvider(controls: Controls) =
       controls.searchConf.GrabFocus() |> ignore
     | _ -> ()
 
-  let onEscHideConfBox (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
+  let onNavigation (_: EventControllerKey) (e: EventControllerKey.KeyReleasedSignalArgs) =
     let keys = e.State, e.Keycode
 
     match keys with
@@ -140,13 +145,13 @@ type StreamEnvProvider(controls: Controls) =
     controls.rightSrc.AddController ctrlEnterController
     controls.listBox.add_OnRowActivated (GObject.SignalHandler<ListBox, ListBox.RowActivatedSignalArgs> onActivateItem)
 
-    let escController = EventControllerKey.New()
+    let navController = EventControllerKey.New()
 
-    escController.add_OnKeyReleased (
-      GObject.SignalHandler<EventControllerKey, EventControllerKey.KeyReleasedSignalArgs> onEscHideConfBox
+    navController.add_OnKeyReleased (
+      GObject.SignalHandler<EventControllerKey, EventControllerKey.KeyReleasedSignalArgs> onNavigation
     )
 
-    controls.confBox.AddController escController
+    controls.confBox.AddController navController
 
     controls.rightSrc.add_OnRealize (
       GObject.SignalHandler<Widget>(fun _ _ -> eventSource.Trigger(Completion Introduction))
@@ -155,6 +160,8 @@ type StreamEnvProvider(controls: Controls) =
   member _.TriggerEvent(request: Request) = eventSource.Trigger(request)
 
   member _.event = eventSource.Publish
+
+  member _.prepare() = controls.leftSrc.Buffer.Text <- ""
 
   member _.consume(d: LlmData) =
     GLib.Functions.IdleAdd(
@@ -320,6 +327,7 @@ let newStreamEnv (c: Controls) =
         m.streamCompletion provider key model prompt
 
       member _.isBusy() = m.isBusy ()
+      member _.prepare() = m.prepare ()
       member _.consume data = m.consume data
       member _.consumptionEnd() = m.consumptionEnd ()
       member _.consumeException e = m.consumeException e }
