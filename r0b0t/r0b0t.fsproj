@@ -8,7 +8,7 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <Version>0.1</Version>
+    <Version>0.1.1</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <AssemblyName>r0b0t</AssemblyName>
@@ -28,7 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\R0b0t.Lib\R0b0t.Lib.fsproj"/>
   </ItemGroup>
-  
+
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\"/>
     <None Include="..\docs\img\logo.png" Pack="true" PackagePath="\"/>
