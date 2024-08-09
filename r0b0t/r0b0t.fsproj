@@ -10,7 +10,7 @@
 
     <Version>0.1.2</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>r0b0t</AssemblyName>
     <RootNamespace>r0b0t</RootNamespace>
     <Title>Chat with LLMs</Title>

@@ -7,7 +7,7 @@
 
     <Version>0.1.2</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>R0b0t.Lib</AssemblyName>
 
     <Title>Library for interacting with Language Models, powering the r0b0t tool</Title>
