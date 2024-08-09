@@ -24,7 +24,7 @@ type ProgressResponse =
 [<Literal>]
 let baseUrl = "https://api.imaginepro.ai"
 
-let requestImage (Key key) (Prompt prompt) =
+let requestImage (Key key) (prompt: LlmPrompt) =
   http {
     config_useBaseUrl baseUrl
     POST "/api/v1/midjourney/imagine"
@@ -50,7 +50,7 @@ let checkImageProgress (Key key) (messageId: string) =
     return! r |> Response.deserializeJsonAsync<ProgressResponse>
   }
 
-let getImage (Key key) (Prompt prompt) uri =
+let getImage (Key key) (prompt: LlmPrompt) uri =
   async {
     let! r =
       http {
@@ -74,7 +74,7 @@ let getImage (Key key) (Prompt prompt) uri =
 [<Literal>]
 let waitForDoneLimit = 100u
 
-let imagine key prompt =
+let imagine key (prompt: LlmPrompt) =
   let messageId = requestImage key prompt |> _.messageId
   let mutable cont = true
   let mutable count = 0u

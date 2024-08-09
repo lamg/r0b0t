@@ -11,7 +11,11 @@ type Model =
     let (Model r) = this
     r
 
-type Prompt = Prompt of string
+type LlmPrompt = string
+
+type Prompt =
+  | LlmPrompt of LlmPrompt
+  | Introduction
 
 type PngData =
   { image: byte array
@@ -60,8 +64,6 @@ type Request =
   | SetModel of Model
   | SetApiKey of Provider * ApiKey
   | Completion of Prompt
-  | Imagine of Prompt
-  | Introduction
 
 type Configuration =
   { model: Model
@@ -83,8 +85,8 @@ type ConfigurationManager =
   abstract member getConfiguration: unit -> Configuration
 
 type CompletionStreamer =
-  abstract member streamCompletion: Provider -> Key -> Model -> Prompt -> AsyncSeq<LlmData>
-
+  abstract member streamCompletion: Provider -> Key -> Model -> LlmPrompt -> AsyncSeq<LlmData>
+  abstract member isBusy: unit -> bool
 
 type StreamEnv =
   inherit RequestProvider
@@ -119,23 +121,29 @@ let welcomeMessage =
       return Word $"{w} "
     })
 
-let requestProcessor (env: StreamEnv) (r: Request) =
+let startStream (env: StreamEnv) comp =
+  Async.StartWithContinuations(
+    computation = comp,
+    continuation = env.consumptionEnd,
+    exceptionContinuation = env.consumeException,
+    cancellationContinuation = ignore
+  )
+
+let keyNotFoundMessage provider =
+  [ Word $"key not found for {provider}" ] |> AsyncSeq.ofSeq
+
+let stream (env: StreamEnv) prompt =
   let conf = env.getConfiguration ()
 
-  let startStream comp =
-    Async.StartWithContinuations(
-      computation = comp,
-      continuation = env.consumptionEnd,
-      exceptionContinuation = env.consumeException,
-      cancellationContinuation = ignore
-    )
+  match prompt, Map.tryFind conf.provider conf.keys with
+  | LlmPrompt prompt, Some key -> env.streamCompletion conf.provider key conf.model prompt
+  | LlmPrompt _, None -> keyNotFoundMessage conf.provider
+  | Introduction, _ -> welcomeMessage
+  |> AsyncSeq.iter env.consume
+  |> startStream env
 
-  let stream provider model prompt =
-    match Map.tryFind provider conf.keys with
-    | Some key -> env.streamCompletion provider key model prompt
-    | None -> [ Word $"key not found for {conf.provider}" ] |> AsyncSeq.ofSeq
-    |> AsyncSeq.iter env.consume
-    |> startStream
+let requestProcessor (env: StreamEnv) (r: Request) =
+  let conf = env.getConfiguration ()
 
   match r with
   | SetModel m ->
@@ -147,17 +155,14 @@ let requestProcessor (env: StreamEnv) (r: Request) =
     conf |> setProvider p |> env.setConfiguration
     env.storeConfiguration ()
 
-  | Completion prompt ->
-    // TODO ignore request while we are already consuming an answer
-    stream conf.provider conf.model prompt
+  | Completion prompt when not (env.isBusy ()) -> stream env prompt
   | SetApiKey(provider, s) ->
     env.setConfiguration
       { conf with
           keys = Map.add provider (Key s) conf.keys }
 
     env.storeConfiguration ()
-  | Imagine prompt -> stream OpenAI (Model dalle3) prompt
-  | Introduction -> welcomeMessage |> AsyncSeq.iter env.consume |> startStream
+  | _ -> ()
 
 let plugLogicToEnv (env: StreamEnv) =
   env.loadConfiguration ()

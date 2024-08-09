@@ -23,7 +23,7 @@ let eventToMsg (line: EventLine) =
     | _ -> None
   | _ -> None
 
-let ask (Key key) (Model model) (Prompt prompt) =
+let ask (Key key) (Model model) (prompt: LlmPrompt) =
   http {
     POST $"https://api-inference.huggingface.co/models/{model}"
     AuthorizationBearer key

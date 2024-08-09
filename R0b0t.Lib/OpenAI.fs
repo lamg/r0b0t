@@ -6,7 +6,7 @@ open OpenAI.Images
 
 open Core
 
-let imagine (Key key) (Prompt p) =
+let imagine (Key key) (p: LlmPrompt) =
   let client = ImageClient(dalle3, key)
 
   let opts =
@@ -29,7 +29,7 @@ let imagine (Key key) (Prompt p) =
   |> AsyncSeq.ofSeqAsync
 
 
-let complete (Key key) (Model m) (Prompt p) =
+let complete (Key key) (Model m) (p: LlmPrompt) =
   let client = ChatClient(m, key, null)
   let r = client.CompleteChatStreamingAsync p
 

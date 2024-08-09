@@ -34,7 +34,7 @@ let eventLineToMsg (line: EventLine) =
   | _ -> None
 
 
-let ask (Key key) (Model model) (Prompt prompt) =
+let ask (Key key) (Model model) (prompt: LlmPrompt) =
   http {
     POST "https://api.anthropic.com/v1/messages"
     header "x-api-key" key

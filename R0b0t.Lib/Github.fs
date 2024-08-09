@@ -173,7 +173,7 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
 let mutable auth: GithubAuth option = None
 
 
-let ask (Key key) (Prompt question) =
+let ask (Key key) (question: LlmPrompt) =
   let currentAuth = auth |> Option.defaultValue { oauthToken = key; token = "" }
   let newAuth, xs = chatCompletion currentAuth question
   auth <- Some newAuth

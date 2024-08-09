@@ -89,9 +89,9 @@ type StreamEnvProvider(controls: Controls) =
     let keys = e.State, e.Keycode
 
     match keys with
-    | _ when keys = controlEnter ->
+    | _ when keys = controlEnter && not controls.spinner.Spinning ->
       controls.leftSrc.Buffer.Text <- ""
-      controls.rightSrc.Buffer.Text |> Prompt |> Completion |> eventSource.Trigger
+      controls.rightSrc.Buffer.Text |> LlmPrompt |> Completion |> eventSource.Trigger
     | _ when keys = controlP ->
       // control + p
       controls.rightSrc.Hide()
@@ -147,7 +147,10 @@ type StreamEnvProvider(controls: Controls) =
     )
 
     controls.confBox.AddController escController
-    controls.rightSrc.add_OnRealize (GObject.SignalHandler<Widget>(fun _ _ -> eventSource.Trigger Introduction))
+
+    controls.rightSrc.add_OnRealize (
+      GObject.SignalHandler<Widget>(fun _ _ -> eventSource.Trigger(Completion Introduction))
+    )
 
   member _.TriggerEvent(request: Request) = eventSource.Trigger(request)
 
@@ -301,6 +304,8 @@ type StreamEnvProvider(controls: Controls) =
     | Anthropic -> Anthropic.ask key model prompt
     | ImaginePro -> ImaginePro.imagine key prompt
 
+  member _.isBusy() = controls.spinner.Spinning
+
 let newStreamEnv (c: Controls) =
   let m = StreamEnvProvider c
 
@@ -314,6 +319,7 @@ let newStreamEnv (c: Controls) =
       member _.streamCompletion provider key model prompt =
         m.streamCompletion provider key model prompt
 
+      member _.isBusy() = m.isBusy ()
       member _.consume data = m.consume data
       member _.consumptionEnd() = m.consumptionEnd ()
       member _.consumeException e = m.consumeException e }
