@@ -1,5 +1,6 @@
 module r0b0tLib.ImaginePro
 
+open System.IO
 open System.Net
 open FSharp.Control
 open FsHttp
@@ -74,10 +75,36 @@ let getImage (Key key) (prompt: LlmPrompt) uri =
 [<Literal>]
 let waitForDoneLimit = 100u
 
+let loadPng () =
+  let bs = File.ReadAllBytes "example.png"
+
+  PngData
+    { prompt = "bla"
+      image = bs
+      revisedPrompt = "bla" }
+
+let fakeImagine _ _ =
+  Seq.unfold
+    (fun acc ->
+      let r = acc + 1
+
+      if r <= 100 then Some(ProgressUpdate((float r) / 100.0), r)
+      else if r = 101 then Some(loadPng (), r)
+      else None)
+    0
+  |> AsyncSeq.ofSeq
+  |> AsyncSeq.mapAsync (fun x ->
+    async {
+      do! Async.Sleep 100
+      return x
+    })
+
 let imagine key (prompt: LlmPrompt) =
+  let newProgress n = float n / 100.0 |> ProgressUpdate
   let messageId = requestImage key prompt |> _.messageId
   let mutable cont = true
   let mutable count = 0u
+  let mutable lastProgress = 0
 
   asyncSeq {
     while cont do
@@ -85,14 +112,25 @@ let imagine key (prompt: LlmPrompt) =
 
       match prog with
       | { progress = Some 100; uri = Some uri } ->
+        yield newProgress 99
         cont <- false
         let! img = getImage key prompt uri
+        yield newProgress 100
         yield img
       | _ when count = waitForDoneLimit ->
         cont <- false
         yield Word "limit reached"
-      | s ->
-        yield Word $"{s.progress |> Option.defaultValue 0} "
-        do! Async.Sleep 5000
-        count <- count + 1u
+      | { progress = Some n } when n < lastProgress ->
+        lastProgress <- lastProgress + 1
+        yield lastProgress |> newProgress
+      | { progress = None } ->
+        lastProgress <- lastProgress + 1
+        yield lastProgress |> newProgress
+
+      | { progress = Some n } ->
+        lastProgress <- n
+        yield newProgress n
+
+      do! Async.Sleep 5000
+      count <- count + 1u
   }

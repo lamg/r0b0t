@@ -6,6 +6,8 @@ open CommandPalette
 type Controls =
   { leftSrc: GtkSource.View
     picture: Picture
+    progress: ProgressBar
+    pictureBox: Box
     rightSrc: GtkSource.View
     rightBox: Box
     confBox: Box
@@ -63,16 +65,32 @@ let rightPanel () =
 
 let leftPanel () =
   let box = new Box()
+  box.SetOrientation Orientation.Vertical
   box.Homogeneous <- true
   let source = sourceView ()
   source.AddCssClass "left_text_view"
   source.Focusable <- false
   box.Focusable <- false
   source.Editable <- false
+
   let picture = new Picture()
-  picture.Hide()
+  picture.Hexpand <- true
+  picture.Vexpand <- true
+
+  let progress = new ProgressBar()
+  progress.Hexpand <- true
+  progress.Vexpand <- false
+
+  let pictureBox = new Box()
+  pictureBox.SetOrientation Orientation.Vertical
+  pictureBox.Homogeneous <- false
+  pictureBox.Append progress
+  pictureBox.Append picture
+  pictureBox.Hide()
+
   box.Append source
-  box.Append picture
+  box.Append pictureBox
+
   let scrollable = new ScrolledWindow()
   scrollable.SetChild box
 
@@ -82,7 +100,7 @@ let leftPanel () =
   css.LoadFromString style
   StyleContext.AddProviderForDisplay(Gdk.Display.GetDefault(), css, 1ul)
 
-  scrollable, source, picture
+  scrollable, source, picture, progress, pictureBox
 
 
 let providerModelBar () =
@@ -107,7 +125,7 @@ let newControls () =
   interactionBox.Vexpand <- true
   interactionBox.SetHomogeneous true
 
-  let leftScroll, leftSrc, picture = leftPanel ()
+  let leftScroll, leftSrc, picture, progress, pictureBox = leftPanel ()
 
   let rightScroll, rightBox, rightSrc, confBox, searchConf, listBox, nav =
     rightPanel ()
@@ -125,6 +143,8 @@ let newControls () =
   { leftSrc = leftSrc
     rightSrc = rightSrc
     picture = picture
+    progress = progress
+    pictureBox = pictureBox
     confBox = confBox
     rightBox = rightBox
     navigationHandler = nav

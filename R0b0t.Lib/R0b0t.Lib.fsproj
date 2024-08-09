@@ -5,7 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>R0b0t.Lib</RootNamespace>
 
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>R0b0t.Lib</AssemblyName>

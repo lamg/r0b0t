@@ -171,18 +171,24 @@ type StreamEnvProvider(controls: Controls) =
         | Word w ->
           if not controls.leftSrc.Visible then
             controls.leftSrc.Show()
-            controls.picture.Hide()
+            controls.pictureBox.Hide()
 
           controls.leftSrc.Buffer.Text <- $"{controls.leftSrc.Buffer.Text}{w}"
         | PngData img ->
-          if not controls.picture.Visible then
+          if not controls.pictureBox.Visible then
 
             controls.leftSrc.Hide()
-            controls.picture.Show()
+            controls.pictureBox.Show()
 
-            let p = PixbufLoader.FromBytes img.image
-            controls.picture.SetPixbuf p
-            saveImage img
+          let p = PixbufLoader.FromBytes img.image
+          controls.picture.SetPixbuf p
+          saveImage img
+        | ProgressUpdate percent ->
+          if not controls.pictureBox.Visible then
+            controls.leftSrc.Hide()
+            controls.pictureBox.Show()
+
+          controls.progress.SetFraction percent
 
         false
     )

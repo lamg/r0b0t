@@ -25,6 +25,7 @@ type PngData =
 type LlmData =
   | Word of string
   | PngData of PngData
+  | ProgressUpdate of float
 
 type Provider =
   | OpenAI
