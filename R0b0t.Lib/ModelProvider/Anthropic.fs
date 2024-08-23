@@ -2,7 +2,10 @@ module Anthropic
 
 open FsHttp
 open ServerSentEvents
-open Core
+
+open Configuration
+open Navigation
+open GtkGui
 
 type Delta =
   { ``type``: string option
@@ -34,7 +37,7 @@ let eventLineToMsg (line: EventLine) =
   | _ -> None
 
 
-let ask (Key key) (Model model) (prompt: LlmPrompt) =
+let ask (Key key) (Model model) (prompt: string) =
   http {
     POST "https://api.anthropic.com/v1/messages"
     header "x-api-key" key

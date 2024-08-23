@@ -1,8 +1,7 @@
 ﻿open System
 open Gtk
-open r0b0tLib
 
-let onActivateApp (controls: Controls.Controls) (sender: Gio.Application) (_: EventArgs) =
+let onActivateApp (boxes: Core.MainBoxes) (sender: Gio.Application) (_: EventArgs) =
   let window = ApplicationWindow.New(sender :?> Application)
   let css = CssProvider.New()
 
@@ -23,21 +22,32 @@ let onActivateApp (controls: Controls.Controls) (sender: Gio.Application) (_: Ev
 
   window.Title <- "r0b0t"
   window.SetDefaultSize(1024, 800)
-  window.SetChild controls.windowBox
-  window.Show()
-  controls.rightSrc.GrabFocus() |> ignore
+  let windowBox = new Box()
+  windowBox.SetOrientation Orientation.Vertical
+  windowBox.Append boxes.topBar
 
-let mainWindow (controls: Controls.Controls) =
+  let interactionBox = new Box()
+  interactionBox.SetOrientation Orientation.Horizontal
+  interactionBox.Vexpand <- true
+  interactionBox.SetHomogeneous true
+  interactionBox.Append boxes.leftPanel
+  interactionBox.Append boxes.rightPanel
+  windowBox.Append interactionBox
+
+  window.SetChild windowBox
+  window.Show()
+  boxes.init ()
+
+let mainWindow (boxes: Core.MainBoxes) =
   let application =
     Application.New("com.github.lamg.r0b0t", Gio.ApplicationFlags.FlagsNone)
 
-  application.add_OnActivate (GObject.SignalHandler<Gio.Application>(onActivateApp controls))
+  application.add_OnActivate (GObject.SignalHandler<Gio.Application>(onActivateApp boxes))
   application.RunWithSynchronizationContext(null)
 
 
 [<EntryPoint>]
 let main _ =
   Module.Initialize()
-  let controls = Controls.newControls ()
-  controls |> StreamEnvProvider.newStreamEnv |> Core.plugLogicToEnv
-  mainWindow controls
+  let boxes = Core.main ()
+  mainWindow boxes

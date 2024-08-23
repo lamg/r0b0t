@@ -1,4 +1,4 @@
-module Github
+module ModelProvider.Github
 
 open System
 open System.IO
@@ -8,7 +8,9 @@ open System.Text.Json
 open FsHttp
 open FSharp.Control
 
-open Core
+open Configuration
+open Navigation
+open GtkGui
 
 type GithubAuth = { oauthToken: string; token: string }
 
@@ -77,7 +79,7 @@ let genHex (n: int) =
 
   for _ in 1..n do
     let index = random.Next(hexChars.Length)
-    sb.Append(hexChars.[index]) |> ignore
+    sb.Append(hexChars[index]) |> ignore
 
   sb.ToString()
 
@@ -119,7 +121,9 @@ let sendChatReq (token: string) (userMsg: string) =
           [ {| role = "system"
                content =
                 "You are ChatGPT, a large language model trained by OpenAI.
-                      Knowledge cutoff: 2021-09
+                  
+open Core
+    Knowledge cutoff: 2021-09
                       Current model: gpt-4" |}
             {| role = "user"; content = userMsg |} ]
          model = "gpt-4"
@@ -173,7 +177,7 @@ let chatCompletion (auth: GithubAuth) (userMsg: string) =
 let mutable auth: GithubAuth option = None
 
 
-let ask (Key key) (question: LlmPrompt) =
+let ask (Key key) (question: string) =
   let currentAuth = auth |> Option.defaultValue { oauthToken = key; token = "" }
   let newAuth, xs = chatCompletion currentAuth question
   auth <- Some newAuth

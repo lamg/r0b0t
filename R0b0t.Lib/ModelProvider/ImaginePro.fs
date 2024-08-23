@@ -1,11 +1,13 @@
-module r0b0tLib.ImaginePro
+module ModelProvider.ImaginePro
 
 open System.IO
 open System.Net
 open FSharp.Control
 open FsHttp
 
-open Core
+open Configuration
+open Navigation
+open GtkGui
 
 type ImagineResponse =
   { success: bool
@@ -25,7 +27,7 @@ type ProgressResponse =
 [<Literal>]
 let baseUrl = "https://api.imaginepro.ai"
 
-let requestImage (Key key) (prompt: LlmPrompt) =
+let requestImage (Key key) (prompt: string) =
   http {
     config_useBaseUrl baseUrl
     POST "/api/v1/midjourney/imagine"
@@ -51,7 +53,7 @@ let checkImageProgress (Key key) (messageId: string) =
     return! r |> Response.deserializeJsonAsync<ProgressResponse>
   }
 
-let getImage (Key key) (prompt: LlmPrompt) uri =
+let getImage (Key key) (prompt: string) uri =
   async {
     let! r =
       http {
@@ -99,7 +101,7 @@ let fakeImagine _ _ =
       return x
     })
 
-let imagine key (prompt: LlmPrompt) =
+let imagine key (prompt: string) =
   let newProgress n = float n / 100.0 |> ProgressUpdate
   let messageId = requestImage key prompt |> _.messageId
   let mutable cont = true

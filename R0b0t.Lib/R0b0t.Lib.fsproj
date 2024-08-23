@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <RootNamespace>R0b0t.Lib</RootNamespace>
+    <RootNamespace>r0b0t.events</RootNamespace>
 
-    <Version>0.1.3</Version>
+    <Version>0.1.4</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>R0b0t.Lib</AssemblyName>
@@ -20,25 +20,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Configuration.fs"/>
+    <Compile Include="Navigation.fs"/>
+    <Compile Include="GtkGui.fs"/>
+    <Compile Include="ModelProvider\OpenAI.fs"/>
+    <Compile Include="ModelProvider\Github.fs"/>
+    <Compile Include="ModelProvider\ServerSentEvents.fs"/>
+    <Compile Include="ModelProvider\Anthropic.fs"/>
+    <Compile Include="ModelProvider\HuggingFace.fs"/>
+    <Compile Include="ModelProvider\ImaginePro.fs"/>
     <Compile Include="Core.fs"/>
-    <Compile Include="OpenAI.fs"/>
-    <Compile Include="Github.fs"/>
-    <Compile Include="ServerSentEvents.fs"/>
-    <Compile Include="Anthropic.fs"/>
-    <Compile Include="HuggingFace.fs"/>
-    <Compile Include="ImaginePro.fs"/>
-    <Compile Include="CommandPalette.fs"/>
-    <Compile Include="Controls.fs"/>
-    <Compile Include="StreamEnvProvider.fs"/>
+
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FsHttp" Version="14.5.0"/>
-    <PackageReference Include="GirCore.GtkSource-5" Version="0.5.0"/>
-    <PackageReference Include="GirCore.Gtk-4.0" Version="0.5.0"/>
-    <PackageReference Include="LamgEnv" Version="0.0.2"/>
     <PackageReference Include="OpenAI" Version="2.0.0-beta.7"/>
     <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1"/>
+    <PackageReference Include="LamgEnv" Version="0.0.2"/>
+    <PackageReference Include="GirCore.GtkSource-5" Version="0.5.0"/>
+    <PackageReference Include="GirCore.Gtk-4.0" Version="0.5.0"/>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5"/>
   </ItemGroup>
 

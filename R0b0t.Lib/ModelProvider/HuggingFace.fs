@@ -1,7 +1,11 @@
 module HuggingFace
 
 open FsHttp
-open Core
+
+open Configuration
+open Navigation
+open GtkGui
+
 open ServerSentEvents
 
 type Message =
@@ -23,7 +27,7 @@ let eventToMsg (line: EventLine) =
     | _ -> None
   | _ -> None
 
-let ask (Key key) (Model model) (prompt: LlmPrompt) =
+let ask (Key key) (Model model) (prompt: string) =
   http {
     POST $"https://api-inference.huggingface.co/models/{model}"
     AuthorizationBearer key

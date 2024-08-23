@@ -1,10 +1,12 @@
-﻿module OpenAI
+﻿module ModelProvider.OpenAI
 
-open FSharp.Control
 open OpenAI.Chat
 open OpenAI.Images
+open FSharp.Control
 
-open Core
+open Configuration
+open Navigation
+open GtkGui
 
 let totalSeconds = 90
 
@@ -25,7 +27,7 @@ let progressSeq () =
       })
     0
 
-let imagine (Key key) (p: LlmPrompt) =
+let imagine (Key key) (prompt: string) =
   let client = ImageClient(dalle3, key)
 
   let opts =
@@ -38,13 +40,13 @@ let imagine (Key key) (p: LlmPrompt) =
 
   let imageSeq =
     asyncSeq {
-      let! png = client.GenerateImageAsync(p, opts) |> Async.AwaitTask
+      let! png = client.GenerateImageAsync(prompt, opts) |> Async.AwaitTask
       yield ProgressUpdate 1.0
 
       yield
         PngData
           { image = png.Value.ImageBytes.ToArray()
-            prompt = p
+            prompt = prompt
             revisedPrompt = png.Value.RevisedPrompt }
     }
 
@@ -54,10 +56,10 @@ let imagine (Key key) (p: LlmPrompt) =
     | PngData _ -> false
     | _ -> true)
 
-let complete (Key key) (Model m) (p: LlmPrompt) =
+let complete (Key key) (Model m) (prompt: string) =
   let client = ChatClient(m, key, null)
-  let r = client.CompleteChatStreamingAsync p
+  let r = client.CompleteChatStreamingAsync prompt
 
   r
   |> AsyncSeq.ofAsyncEnum
-  |> AsyncSeq.map (fun x -> x.ContentUpdate |> Seq.head |> _.Text |> Word)
+  |> AsyncSeq.choose (fun x -> x.ContentUpdate |> Seq.tryHead |> Option.map (_.Text >> Word))

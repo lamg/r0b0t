@@ -1,0 +1,47 @@
+descr CONF_M: configuration manager
+
+αCONF_M = { load_conf, store_conf, get_conf, set_conf, conf }
+
+CONF_M = 
+  load_conf → conf → CONF_M 
+  | conf → store_conf → CONF_M
+  | conf → set_conf → CONF_M
+  | get_conf → conf → CONF_M
+
+αGUI = { 
+  show_palette,
+  hide_palette,
+  activate_palette_item,
+  set_api_key,
+  set_model,
+  set_provider,
+  completion,
+  stream_answer 
+}
+
+NAVIGATION =
+  back → NAVIGATION
+  | move_to_child → NAVIGATION
+  | activate_leaf → NAVIGATION
+
+PALETTE =
+  hide_palette → GUI
+  | activate_palette_item → PALETTE
+  | set_api_key → PALETTE
+  | set_model → PALETTE 
+
+GUI = 
+  show_palette → PALETTE 
+  | completion → stream_answer → GUI
+
+αCONTROLS = { 
+  show_picture_hide_text, 
+  show_text_hide_picture,
+  update_progress,
+  activate_item,
+  start_spinning,
+  stop_spinning,
+  append_word_to_text,
+  clean_text,
+  set_picture
+}

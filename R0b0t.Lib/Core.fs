@@ -2,101 +2,17 @@ module Core
 
 open FSharp.Control
 
-type Key = Key of string
+open Configuration
+open GtkGui
+open Navigation
 
-type Model =
-  | Model of string
+open ModelProvider
 
-  override this.ToString() =
-    let (Model r) = this
-    r
-
-type LlmPrompt = string
-
-type Prompt =
-  | LlmPrompt of LlmPrompt
-  | Introduction
-
-type PngData =
-  { image: byte array
-    prompt: string
-    revisedPrompt: string }
-
-type LlmData =
-  | Word of string
-  | PngData of PngData
-  | ProgressUpdate of float
-
-type Provider =
-  | OpenAI
-  | GitHub
-  | HuggingFace
-  | Anthropic
-  | ImaginePro
-
-[<Literal>]
-let dalle3 = "dall-e-3"
-
-[<Literal>]
-let gpt4oMini = "gpt-4o-mini"
-
-let openAIModels = [ gpt4oMini; dalle3; "gpt-4o" ]
-let githubModels = [ "copilot" ]
-let huggingFaceModels = [ "gpt2" ]
-
-let imagineProAiModels = [ "midjourney" ]
-
-let anthropicModels =
-  [ "claude-3-5-sonnet-20240620"
-    "claude-3-haiku-20240307"
-    "claude-3-opus-20240229" ]
-
-let providersModels =
-  [ OpenAI, openAIModels
-    Anthropic, anthropicModels
-    GitHub, githubModels
-    HuggingFace, huggingFaceModels
-    ImaginePro, imagineProAiModels ]
-
-type ApiKey = string
-
-type Request =
-  | SetProvider of Provider
-  | SetModel of Model
-  | SetApiKey of Provider * ApiKey
-  | Completion of Prompt
-
-type Configuration =
-  { model: Model
-    provider: Provider
-    keys: Map<Provider, Key> }
-
-type RequestProvider =
-  abstract member event: IEvent<Request>
-
-type DataConsumer =
-  abstract member consume: LlmData -> unit
-  abstract member consumptionEnd: unit -> unit
-  abstract member consumeException: exn -> unit
-  abstract member prepare: unit -> unit
-  abstract member isBusy: unit -> bool
-
-
-
-type ConfigurationManager =
-  abstract member storeConfiguration: unit -> unit
-  abstract member loadConfiguration: unit -> unit
-  abstract member setConfiguration: Configuration -> unit
-  abstract member getConfiguration: unit -> Configuration
-
-type CompletionStreamer =
-  abstract member streamCompletion: Provider -> Key -> Model -> LlmPrompt -> AsyncSeq<LlmData>
-
-type StreamEnv =
-  inherit RequestProvider
-  inherit DataConsumer
-  inherit ConfigurationManager
-  inherit CompletionStreamer
+type MainBoxes =
+  { topBar: Gtk.Box
+    leftPanel: Gtk.ScrolledWindow
+    rightPanel: Gtk.ScrolledWindow
+    init: unit -> unit }
 
 let setProvider (p: Provider) (conf: Configuration) =
   let model =
@@ -125,12 +41,15 @@ let welcomeMessage =
       return Word $"{w} "
     })
 
-let startStream (env: StreamEnv) comp =
+let startStreaming (producer: Event<LlmData>) comp =
+  let finish _ = producer.Trigger End
+  let reportExc = StreamExc >> producer.Trigger
+
   Async.StartWithContinuations(
     computation = comp,
-    continuation = env.consumptionEnd,
-    exceptionContinuation = env.consumeException,
-    cancellationContinuation = ignore
+    continuation = finish,
+    exceptionContinuation = (reportExc >> finish),
+    cancellationContinuation = finish
   )
 
 let keyNotFoundMessage provider =
@@ -139,46 +58,88 @@ let keyNotFoundMessage provider =
 let setApiKeyMessage provider =
   [ Word $"API key set for {provider}\n" ] |> AsyncSeq.ofSeq
 
-let streamMessage (env: StreamEnv) (message: AsyncSeq<LlmData>) =
-  env.prepare ()
+let streamMessage (producer: Event<LlmData>) (message: AsyncSeq<LlmData>) =
+  producer.Trigger Prepare
 
-  message |> AsyncSeq.iter env.consume |> startStream env
+  message |> AsyncSeq.iter producer.Trigger |> startStreaming producer
 
-let stream (env: StreamEnv) prompt =
-  let conf = env.getConfiguration ()
+let streamCompletion provider key model prompt =
+  match provider with
+  | OpenAI when model = Model dalle3 -> OpenAI.imagine key prompt
+  | OpenAI -> OpenAI.complete key model prompt
+  | GitHub -> Github.ask key prompt
+  | HuggingFace -> HuggingFace.ask key model prompt
+  | Anthropic -> Anthropic.ask key model prompt
+  | ImaginePro -> ImaginePro.imagine key prompt
 
+let stream (conf: Configuration) (producer: Event<LlmData>) prompt =
   match prompt, Map.tryFind conf.provider conf.keys with
-  | LlmPrompt prompt, Some key -> env.streamCompletion conf.provider key conf.model prompt
+  | LlmPrompt prompt, Some key -> streamCompletion conf.provider key conf.model prompt
   | LlmPrompt _, None -> keyNotFoundMessage conf.provider
   | Introduction, _ -> welcomeMessage
-  |> streamMessage env
+  |> streamMessage producer
 
-let requestProcessor (env: StreamEnv) (r: Request) =
-  let conf = env.getConfiguration ()
+let main () =
+  let producerEvent = Event<LlmData>()
+  let requestEvent = Event<Request>()
+  let mng = ConfigurationManager()
+  mng.loadConfiguration ()
+  let nav = NavigationHandler(mng.getConfiguration (), requestEvent)
+  let r = rightPanel nav
 
-  match r with
-  | SetModel m ->
-    let c = { conf with model = m }
-    c |> env.setConfiguration
-    env.storeConfiguration ()
+  let updateTopBar () =
+    let { model = (Model model)
+          provider = provider } =
+      mng.getConfiguration ()
 
-  | SetProvider p ->
-    conf |> setProvider p |> env.setConfiguration
-    env.storeConfiguration ()
+    r.topBar.model.SetText model
+    r.topBar.provider.SetText(provider.ToString())
 
-  | Completion prompt when not (env.isBusy ()) -> stream env prompt
-  | SetApiKey(provider, s) ->
-    let key = s.Trim()
+  let mutable isStreaming = false
 
-    env.setConfiguration
-      { conf with
-          keys = Map.add provider (Key key) conf.keys }
+  let onLlmData =
+    function
+    | End -> isStreaming <- false
+    | _ -> ()
 
-    env.storeConfiguration ()
-    streamMessage env (setApiKeyMessage conf.provider)
-  | _ -> ()
+  let onRequest (request: Request) =
+    match request with
+    | Skip -> ()
+    | SetModel(_, m) ->
+      let c =
+        { mng.getConfiguration () with
+            model = m }
 
-let plugLogicToEnv (env: StreamEnv) =
-  env.loadConfiguration ()
-  env.getConfiguration () |> env.setConfiguration
-  env.event.Add(requestProcessor env)
+      mng.setConfiguration c
+      updateTopBar ()
+    | SetProvider p ->
+      mng.getConfiguration () |> setProvider p |> mng.setConfiguration
+      updateTopBar ()
+    | Completion prompt when not isStreaming ->
+      isStreaming <- true
+      stream (mng.getConfiguration ()) producerEvent prompt
+    | Completion _ -> ()
+    | SetApiKey(_, Key s) ->
+      let key = s.Trim()
+      let c = mng.getConfiguration ()
+
+      let c =
+        { c with
+            keys = Map.add c.provider (Key key) c.keys }
+
+      mng.setConfiguration c
+
+      streamMessage producerEvent (setApiKeyMessage c.provider)
+
+  requestEvent.Publish.Add onRequest
+  producerEvent.Publish.Add onLlmData
+
+  let left = leftPanel r.topBar.spinner producerEvent.Publish
+
+  { leftPanel = left
+    rightPanel = r.rightPanel
+    topBar = r.topBar.box
+    init =
+      fun _ ->
+        updateTopBar ()
+        requestEvent.Trigger(Completion Introduction) }
