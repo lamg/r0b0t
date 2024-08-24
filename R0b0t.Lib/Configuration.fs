@@ -1,6 +1,7 @@
 ﻿module Configuration
 
 open System
+open System.IO
 
 type Key = Key of string
 
@@ -52,11 +53,13 @@ let providersModels =
     HuggingFace, huggingFaceModels
     ImaginePro, imagineProAiModels ]
 
-let confPath =
-  (LamgEnv.getEnv "HOME" |> Option.defaultValue "~")
-  :: [ ".config"; "r0b0t.json" ]
-  |> List.toArray
-  |> System.IO.Path.Join
+let confDir =
+  (LamgEnv.getEnv "HOME" |> Option.defaultValue "~") :: [ ".config"; "r0b0t" ]
+
+let confPath = confDir @ [ "conf.json" ] |> List.toArray |> Path.Join
+
+let ensureConfDirExists () =
+  confDir |> List.toArray |> Path.Join |> Directory.CreateDirectory |> ignore
 
 type ConfigurationManager() =
   let mutable conf =
@@ -128,13 +131,16 @@ type ConfigurationManager() =
         |> List.map (fun (p, Key k) -> p.ToString(), k)
         |> Map.ofList
 
-      { provider = provider
-        model = model
-        provider_keys = keys }
-      |> (fun v ->
-        let opts = Text.Json.JsonSerializerOptions(WriteIndented = true)
-        Text.Json.JsonSerializer.Serialize<SerializableConf>(v, opts))
-      |> fun json -> IO.File.WriteAllText(confPath, json)
+      let serializable =
+        { provider = provider
+          model = model
+          provider_keys = keys }
+
+      let opts = Text.Json.JsonSerializerOptions(WriteIndented = true)
+      let json = Text.Json.JsonSerializer.Serialize<SerializableConf>(serializable, opts)
+
+      ensureConfDirExists ()
+      File.WriteAllText(confPath, json)
     with e ->
       eprintfn $"failed to store configuration: {e.Message}"
 

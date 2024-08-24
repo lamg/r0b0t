@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# [0.1.4] - 2024-08-24
+
+Changed:
+
+- configuration moved from $HOME/.config/r0b0t.json to $HOME/.config/r0b0t/conf.json
+- internal design based on events, moving event handlers to GtkGui module and simplifying @lanayx style dependency injection, eliminating it for the Core module. Navigation was simplified by relying on fixed configuration groups rather than a tree.
+
+Fixed:
+
+- Display of existing API keys in command palette
+
 # [0.1.3] - 2024-08-09
 
 Added:

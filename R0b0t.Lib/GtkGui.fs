@@ -101,7 +101,7 @@ let populateListBox (l: ListBox) (xs: Row array) =
   let appendRow { label = label; control = control } =
     match control with
     | Checkbox v -> boolSetting label v
-    | Entry _ -> stringSetting label ""
+    | Entry text -> stringSetting label text
     | SettingGroup descr -> settingGroup (label, descr)
     |> l.Append
 

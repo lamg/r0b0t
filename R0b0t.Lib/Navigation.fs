@@ -27,15 +27,15 @@ type Setting = { row: Row; request: Request }
 let settingGroups =
   [| { row =
          { label = "Set provider"
-           control = SettingGroup "SetProvider" }
+           control = SettingGroup "AI platform giving access to LLMs through an API" }
        request = Skip }
      { row =
          { label = "Set model"
-           control = SettingGroup "Set model" }
+           control = SettingGroup "Large Language Models available for the selected provider" }
        request = Skip }
      { row =
          { label = "Set API key"
-           control = SettingGroup "Set API key" }
+           control = SettingGroup "API key for the selected provider for authorizing the requests" }
        request = Skip } |]
 
 let providers = [| OpenAI; Anthropic; HuggingFace; GitHub; ImaginePro |]
@@ -69,13 +69,14 @@ let setModelsGroup =
     (p, settings))
   |> Map.ofList
 
-let newSetApiKeyGroup (providerKeys: Map<Provider, Key>) =
-  providerKeys
-  |> Map.map (fun p key ->
-    [| { row =
-           { label = "API key"
-             control = Entry(let (Key k) = key in k) }
-         request = SetApiKey(p, key) } |])
+let apiKeySetting provider (Key key) =
+  [| { row =
+         { label = "API key"
+           control = Entry key }
+       request = SetApiKey(provider, (Key key)) } |]
+
+
+let newSetApiKeyGroup (providerKeys: Map<Provider, Key>) = providerKeys |> Map.map apiKeySetting
 
 
 type NavigationHandler(conf: Configuration, requester: Event<Request>) =
@@ -100,12 +101,17 @@ type NavigationHandler(conf: Configuration, requester: Event<Request>) =
        2, Entry "" |]
 
   let getGroupSettings group =
-    let activeProvider = fst groupActiveItem[0]
+    let activeProvider = providers[fst groupActiveItem[0]]
 
     match group with
     | 0 -> setProviderGroup
-    | 1 -> setModelsGroup[providers[activeProvider]]
-    | 2 -> setApiKeysGroup[providers[activeProvider]]
+    | 1 -> setModelsGroup[activeProvider]
+    | 2 ->
+      if setApiKeysGroup.ContainsKey activeProvider then
+        setApiKeysGroup[activeProvider]
+      else
+        apiKeySetting activeProvider (Key "")
+
     | _ -> failwith $"mismatch between UI and NavigationHandler, setting group {group} out of range"
 
   // index: optional index of the item the user wants to activate
