@@ -42,12 +42,15 @@ let chooseEvents (f: EventLine -> 'a option) (stream: IO.Stream) =
       try
         let! line = rd.ReadLineAsync(tks.Token).AsTask() |> Async.AwaitTask
 
-        match parseEventLine line with
-        | Some e ->
-          match f e with
-          | Some x -> yield x
+        if line <> null then
+          match parseEventLine line with
+          | Some e ->
+            match f e with
+            | Some x -> yield x
+            | None -> ()
           | None -> ()
-        | None -> ()
+          else
+            cont <- false
       with
       | :? ArgumentNullException
       | :? NullReferenceException

@@ -111,9 +111,11 @@ let main () =
             model = m }
 
       mng.setConfiguration c
+      mng.storeConfiguration ()
       updateTopBar ()
     | SetProvider p ->
       mng.getConfiguration () |> setProvider p |> mng.setConfiguration
+      mng.storeConfiguration ()
       updateTopBar ()
     | Completion prompt when not isStreaming ->
       isStreaming <- true
@@ -123,11 +125,12 @@ let main () =
       let key = s.Trim()
       let c = mng.getConfiguration ()
 
-      let c =
+      let nc =
         { c with
             keys = Map.add c.provider (Key key) c.keys }
 
-      mng.setConfiguration c
+      mng.setConfiguration nc
+      mng.storeConfiguration ()
 
       streamMessage producerEvent (setApiKeyMessage c.provider)
 
