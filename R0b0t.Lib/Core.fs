@@ -31,7 +31,7 @@ let welcomeMessage =
 
   let sendPrompt = "- Send the prompt to the Language Model using **Ctrl+Enter**\n"
 
-  [ welcome; sendPrompt; showCmdPalette; navigate ]
+[ welcome; sendPrompt; showCmdPalette; navigate ]
   |> List.map (fun s -> $"{s}\n".Split " " |> Array.toList)
   |> List.concat
   |> AsyncSeq.ofSeq

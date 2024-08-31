@@ -20,14 +20,14 @@ type Provider =
   | ImaginePro
 
 type SerializableConf =
-  { provider_keys: Map<string, string>
+  { provider_keys: Map<string, string array>
     model: string
     provider: string }
 
 type Configuration =
   { model: Model
     provider: Provider
-    keys: Map<Provider, Key> }
+    keys: Map<Provider, Key array> }
 
 [<Literal>]
 let dalle3 = "dall-e-3"
@@ -73,15 +73,15 @@ type ConfigurationManager() =
           ImaginePro, "imaginepro_key" ]
         |> List.choose (fun (p, var) ->
           match LamgEnv.getEnv var with
-          | Some k -> Some(p, Key k)
+          | Some k -> Some(p, [| Key k |])
           | _ -> None)
         |> Map.ofList }
 
   member this.loadConfiguration() =
-    if System.IO.File.Exists confPath then
+    if File.Exists confPath then
       try
         confPath
-        |> IO.File.ReadAllText
+        |> File.ReadAllText
         |> Text.Json.JsonSerializer.Deserialize<SerializableConf>
         |> function
           | { model = model
@@ -99,7 +99,7 @@ type ConfigurationManager() =
               providersModels
               |> List.choose (fun (p, _) ->
                 match Map.tryFind (p.ToString()) pks with
-                | Some key -> Some(p, Key key)
+                | Some keys -> Some(p, keys |> Array.map Key)
                 | None -> None)
               |> Map.ofList
 
@@ -128,7 +128,7 @@ type ConfigurationManager() =
       let keys =
         conf.keys
         |> Map.toList
-        |> List.map (fun (p, Key k) -> p.ToString(), k)
+        |> List.map (fun (p, keys) -> p.ToString(), keys |> Array.map (fun (Key k) -> k))
         |> Map.ofList
 
       let serializable =

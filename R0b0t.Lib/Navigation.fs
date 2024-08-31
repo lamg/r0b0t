@@ -76,16 +76,24 @@ let apiKeySetting provider (Key key) =
        request = SetApiKey(provider, (Key key)) } |]
 
 
-let newSetApiKeyGroup (providerKeys: Map<Provider, Key>) = providerKeys |> Map.map apiKeySetting
+let newApiKeysGroup (providerKeys: Map<Provider, Key array>) = providerKeys |> Map.map apiKeySetting
 
+// shows a list of groups
+// given an index in case the current element is a group it shows the group members
+// the group members can be fixed or depend on the activated element in another group
+// given an index and maybe a string if the active element is a setting instead of a group
+// it triggers the associated event passing the string as parameter if is needed by the event
+
+
+// an array of functions that when activated, given the environment return a list of settings
 
 type NavigationHandler(conf: Configuration, requester: Event<Request>) =
-  let setApiKeysGroup = newSetApiKeyGroup conf.keys
+  let apiKeysGroup = newApiKeysGroup conf.keys
 
   let mutable activeGroup: int option = None
 
   // settings are contained in groups
-  // groups are identified by predefined indexes
+  // which are identified by predefined indexes
   // active items inside groups are stored in groupActiveItem
   let mutable groupActiveItem =
     let activeProvider = Array.IndexOf(providers, conf.provider)
@@ -107,8 +115,8 @@ type NavigationHandler(conf: Configuration, requester: Event<Request>) =
     | 0 -> setProviderGroup
     | 1 -> setModelsGroup[activeProvider]
     | 2 ->
-      if setApiKeysGroup.ContainsKey activeProvider then
-        setApiKeysGroup[activeProvider]
+      if apiKeysGroup.ContainsKey activeProvider then
+        apiKeysGroup[activeProvider]
       else
         apiKeySetting activeProvider (Key "")
 
