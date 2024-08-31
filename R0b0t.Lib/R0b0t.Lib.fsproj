@@ -5,7 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>r0b0t.events</RootNamespace>
 
-    <Version>0.1.5</Version>
+    <Version>0.1.6</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>R0b0t.Lib</AssemblyName>
@@ -29,6 +29,7 @@
     <Compile Include="ModelProvider\Anthropic.fs"/>
     <Compile Include="ModelProvider\HuggingFace.fs"/>
     <Compile Include="ModelProvider\ImaginePro.fs"/>
+    <Compile Include="ModelProvider\Perplexity.fs"/>
     <Compile Include="Core.fs"/>
 
   </ItemGroup>

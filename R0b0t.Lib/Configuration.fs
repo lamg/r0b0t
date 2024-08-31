@@ -18,6 +18,7 @@ type Provider =
   | HuggingFace
   | Anthropic
   | ImaginePro
+  | Perplexity
 
 type SerializableConf =
   { provider_keys: Map<string, string>
@@ -46,12 +47,18 @@ let anthropicModels =
     "claude-3-haiku-20240307"
     "claude-3-opus-20240229" ]
 
+let perplexityModels =
+  [ "llama-3.1-sonar-small-128k-online"
+    "llama-3.1-sonar-large-128k-online"
+    "llama-3.1-sonar-huge-128k-online" ]
+
 let providersModels =
   [ OpenAI, openAIModels
     Anthropic, anthropicModels
     GitHub, githubModels
     HuggingFace, huggingFaceModels
-    ImaginePro, imagineProAiModels ]
+    ImaginePro, imagineProAiModels
+    Perplexity, perplexityModels ]
 
 let confDir =
   (LamgEnv.getEnv "HOME" |> Option.defaultValue "~") :: [ ".config"; "r0b0t" ]
@@ -70,7 +77,8 @@ type ConfigurationManager() =
           Anthropic, "anthropic_key"
           HuggingFace, "huggingface_key"
           GitHub, "github_key"
-          ImaginePro, "imaginepro_key" ]
+          ImaginePro, "imaginepro_key"
+          Perplexity, "perplexity_key" ]
         |> List.choose (fun (p, var) ->
           match LamgEnv.getEnv var with
           | Some k -> Some(p, Key k)
@@ -116,6 +124,7 @@ type ConfigurationManager() =
               | Some(p, _) -> eprintfn $"model {model} loaded but not supported by {p}"
               | None -> eprintfn $"provider {provider} loaded from configuration, but not supported"
       with e ->
+        // TODO show this to the user in the interface
         eprintfn $"failed to load configuration: {e.Message}"
     else
       this.storeConfiguration ()
