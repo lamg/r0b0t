@@ -49,8 +49,8 @@ let chooseEvents (f: EventLine -> 'a option) (stream: IO.Stream) =
             | Some x -> yield x
             | None -> ()
           | None -> ()
-          else
-            cont <- false
+        else
+          cont <- false
       with
       | :? ArgumentNullException
       | :? NullReferenceException

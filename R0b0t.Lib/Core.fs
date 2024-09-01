@@ -71,6 +71,7 @@ let streamCompletion provider key model prompt =
   | HuggingFace -> HuggingFace.ask key model prompt
   | Anthropic -> Anthropic.ask key model prompt
   | ImaginePro -> ImaginePro.imagine key prompt
+  | Perplexity -> Perplexity.ask key model prompt
 
 let stream (conf: Configuration) (producer: Event<LlmData>) prompt =
   match prompt, Map.tryFind conf.provider conf.keys with

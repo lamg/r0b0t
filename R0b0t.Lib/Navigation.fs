@@ -38,7 +38,7 @@ let settingGroups =
            control = SettingGroup "API key for the selected provider for authorizing the requests" }
        request = Skip } |]
 
-let providers = [| OpenAI; Anthropic; HuggingFace; GitHub; ImaginePro |]
+let providers = [| OpenAI; Anthropic; HuggingFace; GitHub; ImaginePro; Perplexity |]
 
 let setProviderGroup =
   providers
@@ -53,8 +53,8 @@ let providersModels =
     Anthropic, anthropicModels
     HuggingFace, huggingFaceModels
     GitHub, githubModels
-    ImaginePro, imagineProAiModels ]
-
+    ImaginePro, imagineProAiModels
+    Perplexity, perplexityModels ]
 
 let setModelsGroup =
   providersModels
