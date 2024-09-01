@@ -97,14 +97,13 @@ let settingGroup (label, description) =
   item.Append descrLabel
   item
 
-let populateListBox (l: ListBox) (xs: Row array) =
-  let appendRow { label = label; control = control } =
-    match control with
-    | Checkbox v -> boolSetting label v
-    | Entry text -> stringSetting label text
-    | SettingGroup descr -> settingGroup (label, descr)
-    |> l.Append
-
+let populateListBox (l: ListBox) (xs: Control array) =
+  let appendRow =
+    function
+    | Checkbox(label, v) -> boolSetting label v
+    | Entry(label, text) -> stringSetting label text
+    | Group(name, descr) -> settingGroup (name, descr)
+    >> l.Append
 
   l.RemoveAll()
 
@@ -219,10 +218,7 @@ let rightPanel (nav: NavigationHandler) =
       source.Show()
       source.GrabFocus() |> ignore
     | _ when keys = controlP -> searchConf.GrabFocus() |> ignore
-    | _ when keys = backspace ->
-      nav.backToRoot ()
-
-      nav.activateAndGetSettings (None, None) |> populateListBox listBox
+    | _ when keys = backspace -> nav.backToRoot () |> populateListBox listBox
     | _ when keys = downArrow && searchConf.HasFocus -> listBox.GetFirstChild().GrabFocus() |> ignore
     | _ -> ()
 

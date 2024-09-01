@@ -21,14 +21,14 @@ type Provider =
   | Perplexity
 
 type SerializableConf =
-  { provider_keys: Map<string, string array>
+  { provider_keys: Map<string, string>
     model: string
     provider: string }
 
 type Configuration =
   { model: Model
     provider: Provider
-    keys: Map<Provider, Key array> }
+    keys: Map<Provider, Key> }
 
 [<Literal>]
 let dalle3 = "dall-e-3"
@@ -81,7 +81,7 @@ type ConfigurationManager() =
           Perplexity, "perplexity_key" ]
         |> List.choose (fun (p, var) ->
           match LamgEnv.getEnv var with
-          | Some k -> Some(p, [| Key k |])
+          | Some k -> Some(p, Key k)
           | _ -> None)
         |> Map.ofList }
 
@@ -107,7 +107,7 @@ type ConfigurationManager() =
               providersModels
               |> List.choose (fun (p, _) ->
                 match Map.tryFind (p.ToString()) pks with
-                | Some keys -> Some(p, keys |> Array.map Key)
+                | Some key -> Some(p, Key key)
                 | None -> None)
               |> Map.ofList
 
@@ -137,7 +137,7 @@ type ConfigurationManager() =
       let keys =
         conf.keys
         |> Map.toList
-        |> List.map (fun (p, keys) -> p.ToString(), keys |> Array.map (fun (Key k) -> k))
+        |> List.map (fun (p, Key key) -> p.ToString(), key)
         |> Map.ofList
 
       let serializable =
