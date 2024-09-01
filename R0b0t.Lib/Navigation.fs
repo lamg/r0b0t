@@ -63,6 +63,19 @@ let anthropicGroup = createModelsGroup Anthropic anthropicModels
 let perplexityGroup = createModelsGroup Perplexity perplexityModels
 let imagineproGroup = createModelsGroup ImaginePro imagineProAiModels
 
+let setApiKeyGroups =
+  [ Anthropic; OpenAI; Perplexity; GitHub; HuggingFace; ImaginePro ]
+  |> List.map (fun p ->
+    { applicableTo = applicableToProvider p
+      name = "Set API Key"
+      description = "API key for the selected provider for authorizing the requests"
+      settings =
+        [| { description = "API key"
+             setting = Input ""
+             request = SetApiKey(p, Key "") } |] })
+  |> List.toArray
+
+
 let providersGroup =
   { description = "AI platform giving access to LLMs through an API"
     name = "Set provider"
@@ -75,12 +88,14 @@ let providersGroup =
           request = SetProvider x }) }
 
 let originalGroups =
-  [| providersGroup
-     openaiGroup
-     githubGroup
-     anthropicGroup
-     perplexityGroup
-     imagineproGroup |]
+  Array.append
+    [| providersGroup
+       openaiGroup
+       githubGroup
+       anthropicGroup
+       perplexityGroup
+       imagineproGroup |]
+    setApiKeyGroups
 
 let currentGroups (conf: Configuration) (xs: Group array) =
   xs
@@ -96,6 +111,10 @@ let currentGroups (conf: Configuration) (xs: Group array) =
           | { request = SetProvider p } as s ->
             { s with
                 setting = Switch(p = conf.provider) }
+          | { request = SetApiKey(p, _) } as s when p = conf.provider && conf.keys.ContainsKey p ->
+            { s with
+                setting = Input(let (Key k) = conf.keys[p] in k)
+                request = SetApiKey(p, conf.keys[p]) }
           | s -> s)
 
       Some { g with settings = settings }
@@ -118,7 +137,12 @@ let activateSetting (state: State, mng: ConfigurationManager) (index: int option
     let g = state.groups[groupIndex]
     let s = g.settings[index]
 
-    state.event.Trigger s.request // TODO replace with new input in case it's needed
+    let request =
+      match input, s.request with
+      | Some text, SetApiKey(p, _) -> SetApiKey(p, Key text)
+      | _ -> s.request
+
+    state.event.Trigger request
     let newConf = mng.getConfiguration ()
     let newGroups = currentGroups newConf originalGroups
 
