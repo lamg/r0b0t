@@ -1,14 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
+    <RollForward>Minor</RollForward>
     <PackAsTool>true</PackAsTool>
     <PackageId>r0b0t</PackageId>
     <ToolCommandName>r0b0t</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <Version>0.1.7</Version>
+    <Version>0.1.8</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>r0b0t</AssemblyName>

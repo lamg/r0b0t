@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>r0b0t.events</RootNamespace>
 
-    <Version>0.1.7</Version>
+    <Version>0.1.8</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>R0b0t.Lib</AssemblyName>
