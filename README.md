@@ -1,4 +1,4 @@
-[![logo](./docs/img/logo_small.png)][r0b0t]
+[![logo](./docs/img/logo.png)][r0b0t]
 
 [![NuGet Version][nuget-version]][r0b0t]
 [![NuGet Downloads][nuget-downloads]][r0b0t]
@@ -16,7 +16,5 @@ r0b0t is a GTK+ application for interacting with Large Language Models from Open
 ![command_palette](./docs/img/command_palette.png)
 
 [r0b0t]: https://www.nuget.org/packages/r0b0t
-
 [nuget-version]: https://img.shields.io/nuget/v/r0b0t?style=flat-square
-
 [nuget-downloads]: https://img.shields.io/nuget/dt/r0b0t?style=flat-square
