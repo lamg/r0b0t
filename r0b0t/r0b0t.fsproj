@@ -9,7 +9,7 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <Version>0.1.10</Version>
+    <Version>0.1.11</Version>
     <Authors>Luis Ángel Méndez Gort</Authors>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <AssemblyName>r0b0t</AssemblyName>
