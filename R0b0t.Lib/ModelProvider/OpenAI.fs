@@ -57,7 +57,7 @@ let imagine (Key key) (prompt: string) =
     | _ -> true)
 
 let complete (Key key) (Model m) (prompt: string) =
-  let client = ChatClient(m, key, null)
+  let client = ChatClient(m, (System.ClientModel.ApiKeyCredential key), null)
   let r = client.CompleteChatStreamingAsync prompt
 
   r
